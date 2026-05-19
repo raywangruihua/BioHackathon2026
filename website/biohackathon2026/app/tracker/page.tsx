@@ -1,9 +1,9 @@
 'use client';
 
-import Landing from '@/components/screens/Landing';
+import Tracker from '@/components/screens/Tracker';
 import useGo from '@/lib/useGo';
 
 export default function Page() {
   const go = useGo();
-  return <Landing go={go} />;
+  return <Tracker go={go} />;
 }
