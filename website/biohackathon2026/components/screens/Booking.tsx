@@ -3,7 +3,7 @@
 import React from 'react';
 import Icon from '@/components/Icon';
 import Logo from '@/components/Logo';
-import Avatar from '@/components/Avatar';
+import Avatar, { type AvatarTone } from '@/components/Avatar';
 import Eyebrow from '@/components/Eyebrow';
 import Stat from '@/components/Stat';
 import type { GoFn } from '@/lib/screens';
@@ -11,7 +11,7 @@ import type { GoFn } from '@/lib/screens';
 
 // src/booking.jsx — appointment booking flow
 
-const DOCTORS = [
+const DOCTORS: { id: string; name: string; spec: string; years: number; rate: number; reviews: number; tone: AvatarTone; langs: string; price: number; bio: string; next: string }[] = [
   { id: "mira",  name: "Dr. Mira Chandra",  spec: "Endocrinology · PCOS", years: 12, rate: 4.9,
     reviews: 214, tone: "sage", langs: "English, Hindi", price: 60,
     bio: "PCOS specialist with a focus on insulin-resistance phenotypes and integrative care.",
