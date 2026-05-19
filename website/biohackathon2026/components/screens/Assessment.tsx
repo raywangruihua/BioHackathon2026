@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/Icon';
+import Icon, { type IconName } from '@/components/Icon';
 import Logo from '@/components/Logo';
 import Avatar from '@/components/Avatar';
 import Eyebrow from '@/components/Eyebrow';
@@ -204,7 +204,7 @@ const Welcome = ({ onStart }) => (
         <div key={i} style={{ display: "flex", gap: 10, alignItems: "center", flex: 1 }}>
           <div style={{ width: 36, height: 36, borderRadius: 12, background: "#fff",
             display: "grid", placeItems: "center", color: "var(--primary)", flex: "none" }}>
-            <Icon name={ic} size={18}/>
+            <Icon name={ic as IconName} size={18}/>
           </div>
           <div style={{ textAlign: "left" }}>
             <div style={{ fontWeight: 600, fontSize: 13.5 }}>{t}</div>
