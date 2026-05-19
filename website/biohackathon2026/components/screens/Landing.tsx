@@ -162,14 +162,14 @@ const HeroCard = () => (
 const TrustStrip = () => (
   <section style={{ padding: "16px 0 64px" }}>
     <div className="container">
-      <div className="rg-4" style={{
+      <div className="rg-3" style={{
         padding: "28px 36px", borderRadius: 24,
         background: "linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.4))",
-        border: "1px solid var(--line)" }}>
+        border: "1px solid var(--line)", justifyItems: "center", textAlign: "center" }}>
         <Stat value="1 in 10" label="women have PCOS" color="var(--primary)"/>
         <Stat value="70%" label="go undiagnosed for years" color="var(--accent)"/>
         <Stat value="3 min" label="to take the assessment" color="var(--ink)"/>
-        <Stat value="HIPAA" label="private & encrypted" color="var(--sage)"/>
+        {/* <Stat value="HIPAA" label="private & encrypted" color="var(--sage)"/> */}
       </div>
     </div>
   </section>
