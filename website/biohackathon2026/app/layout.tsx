@@ -21,7 +21,7 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: 'Pearl — PCOS care, made personal',
+  title: 'Pearl',
   description:
     'Pearl helps women understand the signs of PCOS, track symptoms over time, and connect with clinicians who listen.',
 };
