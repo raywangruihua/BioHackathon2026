@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/Icon';
+import Icon, { type IconName } from '@/components/Icon';
 import Logo from '@/components/Logo';
 import Avatar, { type AvatarTone } from '@/components/Avatar';
 import Eyebrow from '@/components/Eyebrow';
@@ -86,9 +86,9 @@ const Booking = ({ go }: { go: GoFn }) => {
             <Section title="Visit type">
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                 {[
-                  { id: "Video", icon: "play",     sub: "20–30 min" },
-                  { id: "Chat",  icon: "chat",     sub: "Async, 24h" },
-                  { id: "Clinic",icon: "calendar", sub: "In-person" },
+                  { id: "Video", icon: "play"     as IconName, sub: "20–30 min" },
+                  { id: "Chat",  icon: "chat"     as IconName, sub: "Async, 24h" },
+                  { id: "Clinic",icon: "calendar" as IconName, sub: "In-person" },
                 ].map(t => (
                   <button key={t.id} onClick={() => setType(t.id)} style={{
                     padding: 14, borderRadius: 14,
@@ -152,9 +152,9 @@ const Booking = ({ go }: { go: GoFn }) => {
             <Section title="Share with your clinician">
               <div style={{ display: "grid", gap: 8 }}>
                 {[
-                  { t: "Pearl assessment report", on: true,  icon: "shield" },
-                  { t: "Cycle & symptom log (past 90 days)", on: true, icon: "calendar" },
-                  { t: "Personal notes (you'll see before sending)", on: false, icon: "book" },
+                  { t: "Pearl assessment report", on: true,  icon: "shield"   as IconName },
+                  { t: "Cycle & symptom log (past 90 days)", on: true, icon: "calendar" as IconName },
+                  { t: "Personal notes (you'll see before sending)", on: false, icon: "book" as IconName },
                 ].map((x, i) => (
                   <label key={i} style={{ display: "flex", alignItems: "center", gap: 10,
                     padding: "10px 14px", borderRadius: 12, background: "var(--bg-tint)",
