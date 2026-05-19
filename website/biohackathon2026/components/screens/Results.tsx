@@ -1,27 +1,24 @@
 'use client';
 
-import React from 'react';
+import { useState } from 'react';
 import Icon from '@/components/Icon';
-import Logo from '@/components/Logo';
 import Avatar from '@/components/Avatar';
 import Eyebrow from '@/components/Eyebrow';
-import Stat from '@/components/Stat';
 import type { GoFn } from '@/lib/screens';
 
 
-// src/results.jsx — patient results & risk dashboard
-
 const Results = ({ go }: { go: GoFn }) => {
-  // Mock data — would come from assessment in real app
-  const overall = 64; // moderate
+  const [primerOpen, setPrimerOpen] = useState(false);
+
+  const overall = 64;
   const indicators = [
-    { name: "Cycle irregularity", score: 78, level: "high",   icon: "moon",
+    { name: "Cycle irregularity", score: 78, othersScore: 52, level: "high",   icon: "moon",
       detail: "You reported cycles often longer than 35 days. This is a primary Rotterdam criterion." },
-    { name: "Skin & hair changes", score: 62, level: "moderate", icon: "sparkle",
+    { name: "Skin & hair changes", score: 62, othersScore: 48, level: "moderate", icon: "sparkle",
       detail: "Hormonal acne and some increased facial hair — suggests elevated androgens." },
-    { name: "Energy, weight & mood", score: 55, level: "moderate", icon: "activity",
+    { name: "Energy, weight & mood", score: 55, othersScore: 44, level: "moderate", icon: "activity",
       detail: "Persistent fatigue and gradual weight gain can reflect insulin sensitivity changes." },
-    { name: "Family history",       score: 40, level: "low",      icon: "shield",
+    { name: "Family history",       score: 40, othersScore: 35, level: "low",      icon: "shield",
       detail: "Some related conditions in your family — worth mentioning to your doctor." },
   ];
 
@@ -64,7 +61,7 @@ const Results = ({ go }: { go: GoFn }) => {
                 Your indicators, broken down
               </h3>
               <p style={{ fontSize: 14, color: "var(--ink-2)", margin: "6px 0 0" }}>
-                Each pattern aligns with one or more well-known signs of PCOS.
+                This is how your results compare to others similar to you. Each pattern aligns with one or more well-known signs of PCOS.
               </p>
             </div>
             <button className="btn btn-ghost btn-sm">
@@ -79,12 +76,14 @@ const Results = ({ go }: { go: GoFn }) => {
 
         {/* Next steps */}
         <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 22 }}>
-          <NextSteps go={go}/>
+          <NextSteps go={go} onOpenPrimer={() => setPrimerOpen(true)}/>
           <DoctorPick go={go}/>
         </div>
 
         <Disclaimer/>
       </div>
+
+      {primerOpen && <PrimerModal onClose={() => setPrimerOpen(false)}/>}
     </div>
   );
 };
@@ -164,15 +163,12 @@ const SummaryCard = ({ band, go }) => (
       <button className="btn btn-rose btn-sm" onClick={() => go("booking")}>
         Book a clinician <Icon name="arrow" size={14}/>
       </button>
-      <button className="btn btn-ghost btn-sm" onClick={() => go("tracker")}>
-        Start cycle tracking
-      </button>
     </div>
   </div>
 );
 
 // ───────── Indicator row ─────────
-const IndicatorRow = ({ name, score, level, icon, detail }) => {
+const IndicatorRow = ({ name, score, othersScore, level, icon, detail }) => {
   const tones = {
     low:      { fg: "var(--sage)", soft: "var(--sage-soft)", txt: "#476158" },
     moderate: { fg: "var(--warn)", soft: "var(--warn-soft)", txt: "#8A4F1F" },
@@ -192,21 +188,39 @@ const IndicatorRow = ({ name, score, level, icon, detail }) => {
         <span className="chip" style={{ background: tones.soft, color: tones.txt,
           textTransform: "capitalize" }}>{level}</span>
       </div>
-      <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ flex: 1, height: 6, background: "rgba(42,31,37,.06)", borderRadius: 99 }}>
-          <div style={{ width: `${score}%`, height: "100%", background: tones.fg, borderRadius: 99 }}/>
+
+      {/* Others avg row */}
+      <div style={{ marginTop: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ fontSize: 11, color: tones.fg, opacity: 0.4, minWidth: 68, fontWeight: 500,
+            letterSpacing: ".01em", textTransform: "uppercase" }}>Others</div>
+          <div style={{ flex: 1, height: 5, background: "rgba(42,31,37,.06)", borderRadius: 99 }}>
+            <div style={{ width: `${othersScore}%`, height: "100%",
+              background: tones.fg, borderRadius: 99, opacity: 0.3 }}/>
+          </div>
+          <div style={{ fontSize: 13, color: tones.fg, opacity: 0.4, fontWeight: 600, minWidth: 28,
+            textAlign: "right" }}>{othersScore}</div>
         </div>
-        <div className="serif" style={{ fontSize: 18, color: tones.fg, fontWeight: 600, minWidth: 38 }}>
-          {score}
+
+        {/* User row */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 7 }}>
+          <div style={{ fontSize: 11, color: tones.txt, minWidth: 68, fontWeight: 600,
+            letterSpacing: ".01em", textTransform: "uppercase" }}>You</div>
+          <div style={{ flex: 1, height: 7, background: "rgba(42,31,37,.06)", borderRadius: 99 }}>
+            <div style={{ width: `${score}%`, height: "100%", background: tones.fg, borderRadius: 99 }}/>
+          </div>
+          <div className="serif" style={{ fontSize: 16, color: tones.fg, fontWeight: 700,
+            minWidth: 28, textAlign: "right" }}>{score}</div>
         </div>
       </div>
+
       <p style={{ fontSize: 13, color: "var(--ink-2)", margin: "12px 0 0", lineHeight: 1.5 }}>{detail}</p>
     </div>
   );
 };
 
 // ───────── Next steps ─────────
-const NextSteps = ({ go }) => (
+const NextSteps = ({ go, onOpenPrimer }: { go: GoFn; onOpenPrimer: () => void }) => (
   <div className="card" style={{ padding: 32, borderRadius: 28 }}>
     <Eyebrow>Recommended next steps</Eyebrow>
     <h3 className="serif" style={{ fontSize: 26, margin: "12px 0 22px", fontWeight: 500 }}>
@@ -216,13 +230,13 @@ const NextSteps = ({ go }) => (
       {[
         { n: "01", icon: "calendar", title: "Book a 20-minute consult",
           body: "We'll match you with a clinician familiar with PCOS. Share your report with one tap.",
-          action: "Book a doctor", goTo: "booking" },
+          action: "Book a doctor", goTo: "booking" as const },
         { n: "02", icon: "moon", title: "Start tracking your cycle",
           body: "Two weeks of cycle and symptom data will sharpen your report dramatically.",
-          action: "Open tracker", goTo: "tracker" },
+          action: "Start tracking", goTo: "https://flo.health/" },
         { n: "03", icon: "book", title: "Read: \"PCOS, plainly\"",
           body: "A 6-minute primer on what PCOS is, what the Rotterdam criteria are, and what tests to ask for.",
-          action: "Open article", goTo: null },
+          action: "Open article", goTo: "primer" as const },
       ].map((s, i) => (
         <div key={i} style={{ display: "flex", gap: 16, padding: "16px 18px",
           borderRadius: 18, background: "var(--bg-tint)" }}>
@@ -237,11 +251,184 @@ const NextSteps = ({ go }) => (
             <div style={{ fontSize: 13, color: "var(--ink-2)", marginTop: 2, lineHeight: 1.5 }}>{s.body}</div>
           </div>
           <button className="btn btn-ghost btn-sm" style={{ alignSelf: "center" }}
-            onClick={() => s.goTo && go(s.goTo)}>
+            onClick={() => {
+              if (s.goTo === "primer") { onOpenPrimer(); return; }
+              if (s.goTo.startsWith("http")) window.open(s.goTo, "_blank");
+              else go(s.goTo as any);
+            }}>
             {s.action} <Icon name="arrow" size={12}/>
           </button>
         </div>
       ))}
+    </div>
+  </div>
+);
+
+// ───────── PCOS primer modal ─────────
+const PrimerModal = ({ onClose }: { onClose: () => void }) => (
+  <div
+    onClick={onClose}
+    style={{
+      position: "fixed", inset: 0, zIndex: 200,
+      background: "rgba(42,31,37,.55)", backdropFilter: "blur(6px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "24px 16px",
+    }}
+  >
+    <div
+      onClick={e => e.stopPropagation()}
+      style={{
+        background: "#fff", borderRadius: 28, maxWidth: 680, width: "100%",
+        maxHeight: "88vh", overflowY: "auto",
+        padding: "40px 44px", position: "relative",
+        boxShadow: "0 24px 80px rgba(42,31,37,.18)",
+      }}
+    >
+      {/* close */}
+      <button
+        onClick={onClose}
+        className="btn btn-ghost btn-sm"
+        style={{ position: "absolute", top: 20, right: 20 }}
+      >
+        <Icon name="close" size={16}/> Close
+      </button>
+
+      <Eyebrow>6-minute read</Eyebrow>
+      <h2 className="serif" style={{ fontSize: 34, fontWeight: 500, letterSpacing: "-.02em",
+        margin: "12px 0 6px", lineHeight: 1.1 }}>
+        PCOS, plainly.
+      </h2>
+      <p style={{ fontSize: 14, color: "var(--ink-2)", margin: "0 0 32px" }}>
+        What it is, how doctors diagnose it, and what to ask at your next appointment.
+      </p>
+
+      <PrimerSection title="What is PCOS?">
+        <p>
+          Polycystic ovary syndrome (PCOS) is the most common hormonal condition in people
+          with ovaries — affecting roughly 1 in 10. Despite the name, you don't need to
+          have cysts on your ovaries to have it. The name comes from a 1935 paper and has
+          caused confusion ever since.
+        </p>
+        <p>
+          At its core, PCOS is a hormonal imbalance. The ovaries produce slightly more
+          androgen (a group of hormones that includes testosterone) than usual. This
+          disrupts the monthly cycle of follicle growth and ovulation, which causes cycles
+          to become irregular or stop altogether. The elevated androgens also produce the
+          skin and hair symptoms many people notice first: acne along the jawline and chin,
+          increased facial or body hair (hirsutism), and sometimes thinning of the hair on
+          the scalp.
+        </p>
+        <p>
+          Many people with PCOS also have insulin resistance — the body's cells don't
+          respond to insulin as efficiently as they should. The pancreas compensates by
+          producing more insulin, and high insulin levels can further drive androgen
+          production. This is why weight management can be harder, and why fatigue is so
+          commonly reported.
+        </p>
+      </PrimerSection>
+
+      <PrimerSection title="The Rotterdam criteria — how PCOS is actually diagnosed">
+        <p>
+          There is no single blood test that says "you have PCOS." Diagnosis is clinical,
+          meaning a doctor looks at the whole picture using a standard called the{" "}
+          <strong>Rotterdam criteria</strong> (agreed upon by a 2003 expert consensus in
+          Rotterdam, Netherlands). You need to meet <strong>at least two of the three
+          following criteria</strong> — and other causes must be ruled out first.
+        </p>
+        <div style={{ display: "grid", gap: 12, margin: "20px 0" }}>
+          {[
+            {
+              n: "1",
+              title: "Irregular or absent ovulation",
+              body: "Typically shows up as cycles shorter than 21 days or longer than 35 days, or fewer than 8 cycles per year. Some people stop getting a period entirely (amenorrhoea).",
+            },
+            {
+              n: "2",
+              title: "Clinical or biochemical signs of high androgens",
+              body: "Either visible symptoms (acne, excess facial/body hair, scalp hair thinning) or elevated androgens on a blood test (free testosterone, DHEAS, or androstenedione).",
+            },
+            {
+              n: "3",
+              title: "Polycystic-morphology ovaries on ultrasound",
+              body: "12 or more follicles (small fluid-filled sacs) visible on one or both ovaries, or an ovarian volume greater than 10 mL. This criterion alone — without the others — does not mean you have PCOS.",
+            },
+          ].map(c => (
+            <div key={c.n} style={{ display: "flex", gap: 14, padding: "16px 18px",
+              borderRadius: 16, background: "var(--bg-tint)", border: "1px solid var(--line)" }}>
+              <div className="serif-it" style={{ fontSize: 22, color: "var(--primary)",
+                minWidth: 20, lineHeight: 1 }}>{c.n}</div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>{c.title}</div>
+                <div style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.55 }}>{c.body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p>
+          Before diagnosing PCOS, a clinician will typically want to rule out thyroid
+          disorders, elevated prolactin, and congenital adrenal hyperplasia — conditions
+          that can look identical on the surface.
+        </p>
+      </PrimerSection>
+
+      <PrimerSection title="What tests to ask for">
+        <p>
+          When you see a doctor, asking for a targeted panel upfront saves time. Here's
+          what's typically ordered at a first appointment for suspected PCOS:
+        </p>
+        <div style={{ display: "grid", gap: 8, margin: "16px 0" }}>
+          {[
+            { label: "Free & total testosterone", why: "The core androgen marker for PCOS." },
+            { label: "DHEAS (dehydroepiandrosterone sulfate)", why: "Androgen produced by the adrenal glands — helps rule out adrenal causes." },
+            { label: "LH & FSH", why: "An elevated LH:FSH ratio (typically >2:1) is common in PCOS." },
+            { label: "Fasting insulin & glucose (or HOMA-IR)", why: "Screens for insulin resistance, which affects treatment choices." },
+            { label: "TSH (thyroid-stimulating hormone)", why: "Thyroid disorders mimic PCOS symptoms and must be excluded." },
+            { label: "Prolactin", why: "Elevated prolactin (hyperprolactinaemia) causes cycle disruption and must be ruled out." },
+            { label: "AMH (anti-Müllerian hormone)", why: "Often elevated in PCOS; useful for tracking ovarian reserve and response to treatment." },
+            { label: "Pelvic ultrasound", why: "Looks at ovarian morphology and endometrial thickness." },
+          ].map((t, i) => (
+            <div key={i} style={{ display: "flex", gap: 12, padding: "12px 14px",
+              borderRadius: 12, background: i % 2 === 0 ? "var(--bg-tint)" : "transparent" }}>
+              <Icon name="dot" size={10} style={{ color: "var(--primary)", marginTop: 4, flex: "none" }}/>
+              <div>
+                <span style={{ fontWeight: 600, fontSize: 14 }}>{t.label}</span>
+                <span style={{ fontSize: 13, color: "var(--ink-2)" }}> — {t.why}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p>
+          Not every test is needed for every person. A good clinician will tailor the panel
+          to your symptoms. If your GP seems uncertain, asking for a referral to a
+          gynaecologist or endocrinologist is entirely reasonable.
+        </p>
+      </PrimerSection>
+
+      <PrimerSection title="One more thing">
+        <p>
+          PCOS is chronic but very manageable. Lifestyle changes (particularly reducing
+          refined carbohydrates and increasing movement) have strong evidence behind them.
+          Medications like combined oral contraceptives, metformin, and spironolactone each
+          target different aspects of the syndrome. Fertility is often preserved with
+          treatment. The earlier you get clarity, the more options you have.
+        </p>
+        <p style={{ color: "var(--ink-2)", fontSize: 13 }}>
+          This primer is for educational purposes only and does not constitute medical
+          advice. Speak with a qualified clinician before making any health decisions.
+        </p>
+      </PrimerSection>
+    </div>
+  </div>
+);
+
+const PrimerSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div style={{ marginBottom: 32 }}>
+    <h3 className="serif" style={{ fontSize: 22, fontWeight: 500, margin: "0 0 14px",
+      letterSpacing: "-.01em", borderBottom: "1px solid var(--line)", paddingBottom: 10 }}>
+      {title}
+    </h3>
+    <div style={{ fontSize: 15, lineHeight: 1.7, color: "var(--ink)", display: "grid", gap: 14 }}>
+      {children}
     </div>
   </div>
 );

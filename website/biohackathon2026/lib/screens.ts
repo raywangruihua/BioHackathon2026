@@ -23,7 +23,7 @@ export const SCREENS: Screen[] = [
   { id: 'landing',    path: '/',            label: 'Home',       icon: 'flower',   view: 'patient' },
   { id: 'assessment', path: '/assessment',  label: 'Assessment', icon: 'check',    view: 'patient' },
   { id: 'results',    path: '/results',     label: 'My report',  icon: 'chart',    view: 'patient' },
-  { id: 'tracker',    path: '/tracker',     label: 'Tracker',    icon: 'calendar', view: 'patient' },
+  // { id: 'tracker',    path: '/tracker',     label: 'Tracker',    icon: 'calendar', view: 'patient' },
   { id: 'booking',    path: '/booking',     label: 'Doctors',    icon: 'chat',     view: 'patient' },
   { id: 'doctor',     path: '/doctor',      label: 'Dashboard',  icon: 'chart',    view: 'doctor'  },
 ];

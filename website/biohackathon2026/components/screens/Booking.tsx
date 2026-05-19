@@ -50,7 +50,7 @@ const Booking = ({ go }: { go: GoFn }) => {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 22 }}>
           {/* Left: doctor list + filters */}
           <div>
-            <div className="card" style={{ padding: 20, borderRadius: 22, marginBottom: 14 }}>
+            {/* <div className="card" style={{ padding: 20, borderRadius: 22, marginBottom: 14 }}>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {["All specialties","PCOS","Endocrinology","Nutrition","Reproductive"].map((f, i) => (
                   <span key={f} className="chip" style={{
@@ -60,7 +60,7 @@ const Booking = ({ go }: { go: GoFn }) => {
                   }}>{f}</span>
                 ))}
               </div>
-            </div>
+            </div> */}
             <div style={{ display: "grid", gap: 12 }}>
               {DOCTORS.map(d => (
                 <DoctorCard key={d.id} d={d} selected={doctor.id === d.id}
@@ -270,10 +270,10 @@ const Confirmation = ({ doctor, day, slot, type, go }) => {
 
             <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 28,
               flexWrap: "wrap" }}>
-              <button className="btn btn-primary" onClick={() => go("tracker")}>
+              {/* <button className="btn btn-primary" onClick={() => go("tracker")}>
                 Back to my tracker
-              </button>
-              <button className="btn btn-ghost">Add to calendar</button>
+              </button> */}
+              <button className="btn btn-primary">Add to calendar</button>
             </div>
           </div>
         </div>

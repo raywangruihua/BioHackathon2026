@@ -307,9 +307,9 @@ const DoneCard = ({ go }) => (
         <button className="btn btn-rose btn-lg" onClick={() => go("results")}>
           See my report <Icon name="arrow" size={16}/>
         </button>
-        <button className="btn btn-ghost btn-lg" onClick={() => go("tracker")}>
+        {/* <button className="btn btn-ghost btn-lg" onClick={() => go("tracker")}>
           Start tracking
-        </button>
+        </button> */}
       </div>
     </div>
   </div>

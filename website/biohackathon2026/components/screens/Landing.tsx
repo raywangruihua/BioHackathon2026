@@ -9,7 +9,7 @@ import Stat from '@/components/Stat';
 import type { GoFn } from '@/lib/screens';
 
 
-// src/landing.jsx — marketing landing page for Pearl
+// src/landing.tsx — marketing landing page for Pearl
 
 const Landing = ({ go }: { go: GoFn }) => {
   return (
@@ -19,9 +19,9 @@ const Landing = ({ go }: { go: GoFn }) => {
       <WhatIsPCOS />
       <HowItWorks go={go} />
       <AssessmentTeaser go={go} />
-      <Testimonials />
+      {/* <Testimonials /> */}
       <FinalCTA go={go} />
-      <Footer />
+      <Footer go={go} />
     </div>
   );
 };
@@ -257,8 +257,7 @@ const HowItWorks = ({ go }) => {
   const steps = [
     { n: "01", title: "Take the assessment", body: "20 questions about your cycle, symptoms, and history — 3 minutes.", icon: "check" },
     { n: "02", title: "See your patterns", body: "A personal report shows which PCOS signs apply to you and how strongly.", icon: "chart" },
-    { n: "03", title: "Track over time", body: "Log your cycle and daily symptoms to surface trends doctors miss.", icon: "calendar" },
-    { n: "04", title: "Talk to a clinician", body: "Book a video consult and share your full report with one tap.", icon: "chat" },
+    { n: "03", title: "Talk to a clinician", body: "Book an appointment and get a more detailed screening if you are at risk.", icon: "chat" },
   ];
   return (
     <section style={{ padding: "80px 0", background: "var(--bg-tint)" }}>
@@ -276,7 +275,7 @@ const HowItWorks = ({ go }) => {
           </button>
         </div>
 
-        <div style={{ marginTop: 56, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
+        <div style={{ marginTop: 56, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
           {steps.map((s, i) => (
             <div key={i} style={{ position: "relative" }}>
               <div className="card" style={{ padding: 26, borderRadius: 24, height: "100%",
@@ -394,44 +393,45 @@ const AssessmentTeaser = ({ go }) => (
 );
 
 // ───────── Testimonials ─────────
-const Testimonials = () => {
-  const quotes = [
-    { name: "Anita R.", age: 28, tone: "rose",
-      text: "I'd been told 'it's just stress' for six years. Pearl gave me the language and the data to actually be heard." },
-    { name: "Priya K.", age: 24, tone: "accent",
-      text: "The tracker showed me my cycle had been 47 days on average. I had no idea — and neither did my GP until I shared the report." },
-    { name: "Mehak S.", age: 31, tone: "sage",
-      text: "It didn't feel like a medical app. It felt like someone finally took my questions seriously." },
-  ];
-  return (
-    <section style={{ padding: "80px 0", background: "var(--bg-tint)" }}>
-      <div className="container">
-        <Eyebrow>Real stories</Eyebrow>
-        <h2 className="serif" style={{ fontSize: 52, lineHeight: 1.05, margin: "14px 0 48px",
-          fontWeight: 500, letterSpacing: "-.02em", maxWidth: 720 }}>
-          From women who finally <span className="serif-it" style={{ color: "var(--primary)" }}>felt heard.</span>
-        </h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22 }}>
-          {quotes.map((q, i) => (
-            <div key={i} className="card" style={{ padding: 32, borderRadius: 26 }}>
-              <div className="serif" style={{ fontSize: 64, lineHeight: 0.6, color: "var(--primary)",
-                fontStyle: "italic" }}>“</div>
-              <p className="serif" style={{ fontSize: 19, lineHeight: 1.45, fontWeight: 400,
-                margin: "12px 0 28px", letterSpacing: "-.005em" }}>{q.text}</p>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <Avatar name={q.name} tone={q.tone}/>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{q.name}</div>
-                  <div style={{ fontSize: 12.5, color: "var(--ink-2)" }}>Age {q.age} · Pearl member</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
+// TODO: Should get real testimonials or remove this section
+// const Testimonials = () => {
+//   const quotes = [
+//     { name: "Anita R.", age: 28, tone: "rose",
+//       text: "I'd been told 'it's just stress' for six years. Pearl gave me the language and the data to actually be heard." },
+//     { name: "Priya K.", age: 24, tone: "accent",
+//       text: "The tracker showed me my cycle had been 47 days on average. I had no idea — and neither did my GP until I shared the report." },
+//     { name: "Mehak S.", age: 31, tone: "sage",
+//       text: "It didn't feel like a medical app. It felt like someone finally took my questions seriously." },
+//   ];
+//   return (
+//     <section style={{ padding: "80px 0", background: "var(--bg-tint)" }}>
+//       <div className="container">
+//         <Eyebrow>Real stories</Eyebrow>
+//         <h2 className="serif" style={{ fontSize: 52, lineHeight: 1.05, margin: "14px 0 48px",
+//           fontWeight: 500, letterSpacing: "-.02em", maxWidth: 720 }}>
+//           From women who finally <span className="serif-it" style={{ color: "var(--primary)" }}>felt heard.</span>
+//         </h2>
+//         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22 }}>
+//           {quotes.map((q, i) => (
+//             <div key={i} className="card" style={{ padding: 32, borderRadius: 26 }}>
+//               <div className="serif" style={{ fontSize: 64, lineHeight: 0.6, color: "var(--primary)",
+//                 fontStyle: "italic" }}>“</div>
+//               <p className="serif" style={{ fontSize: 19, lineHeight: 1.45, fontWeight: 400,
+//                 margin: "12px 0 28px", letterSpacing: "-.005em" }}>{q.text}</p>
+//               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+//                 <Avatar name={q.name} tone={q.tone}/>
+//                 <div>
+//                   <div style={{ fontWeight: 600, fontSize: 14 }}>{q.name}</div>
+//                   <div style={{ fontSize: 12.5, color: "var(--ink-2)" }}>Age {q.age} · Pearl member</div>
+//                 </div>
+//               </div>
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     </section>
+//   );
+// };
 
 // ───────── Final CTA band ─────────
 const FinalCTA = ({ go }) => (
@@ -474,41 +474,72 @@ const FinalCTA = ({ go }) => (
 );
 
 // ───────── Footer ─────────
-const Footer = () => (
-  <footer style={{ padding: "56px 0 32px", borderTop: "1px solid var(--line)" }}>
-    <div className="container">
-      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: 32 }}>
-        <div>
-          <Logo size={32}/>
-          <p style={{ fontSize: 13.5, color: "var(--ink-2)", marginTop: 14, maxWidth: 320, lineHeight: 1.55 }}>
-            Pearl is a women's health platform for understanding and managing PCOS,
-            built with clinicians and women living with the condition.
-          </p>
-        </div>
-        {[
-          ["Product", ["Assessment", "Cycle tracker", "Book a doctor", "For clinics"]],
-          ["Learn", ["What is PCOS", "Symptoms guide", "Rotterdam criteria", "Research"]],
-          ["Company", ["About", "Privacy", "Terms", "Contact"]],
-        ].map(([h, items]) => (
-          <div key={h}>
+const footerLinkStyle: React.CSSProperties = {
+  fontSize: 14, color: "var(--ink-2)", textDecoration: "none", cursor: "pointer",
+};
+
+const Footer = ({ go }: { go: GoFn }) => {
+  const productLinks: [string, () => void][] = [
+    ["Assessment", () => go("assessment")],
+    ["Book a doctor", () => go("booking")],
+    ["For clinics", () => go("booking")],
+  ];
+
+  const learnLinks: [string, string][] = [
+    ["What is PCOS", "https://www.nichd.nih.gov/health/topics/pcos"],
+    ["Symptoms guide", "https://www.nhs.uk/conditions/polycystic-ovary-syndrome-pcos/symptoms/"],
+    ["Rotterdam criteria", "https://en.wikipedia.org/wiki/Rotterdam_criteria"],
+    ["Research", "https://pubmed.ncbi.nlm.nih.gov/?term=polycystic+ovary+syndrome"],
+  ];
+
+  return (
+    <footer style={{ padding: "56px 0 32px", borderTop: "1px solid var(--line)" }}>
+      <div className="container">
+        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: 32 }}>
+          <div>
+            <Logo size={32}/>
+            <p style={{ fontSize: 13.5, color: "var(--ink-2)", marginTop: 14, maxWidth: 320, lineHeight: 1.55 }}>
+              Pearl is a women's health platform for understanding and managing PCOS,
+              built with clinicians and women living with the condition.
+            </p>
+          </div>
+
+          <div>
             <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase",
-              color: "var(--muted)", fontWeight: 600 }}>{h}</div>
+              color: "var(--muted)", fontWeight: 600 }}>Product</div>
             <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0", display: "grid", gap: 8 }}>
-              {items.map(x => <li key={x} style={{ fontSize: 14, color: "var(--ink-2)" }}>{x}</li>)}
+              {productLinks.map(([label, onClick]) => (
+                <li key={label}>
+                  <button onClick={onClick} style={{ ...footerLinkStyle, background: "none", border: "none", padding: 0 }}>
+                    {label}
+                  </button>
+                </li>
+              ))}
             </ul>
           </div>
-        ))}
+
+          <div>
+            <div style={{ fontSize: 12, letterSpacing: ".1em", textTransform: "uppercase",
+              color: "var(--muted)", fontWeight: 600 }}>Learn</div>
+            <ul style={{ listStyle: "none", padding: 0, margin: "12px 0 0", display: "grid", gap: 8 }}>
+              {learnLinks.map(([label, href]) => (
+                <li key={label}>
+                  <a href={href} target="_blank" rel="noopener noreferrer" style={footerLinkStyle}>
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 48, paddingTop: 22, borderTop: "1px solid var(--line)",
+          display: "flex", justifyContent: "space-between", fontSize: 12.5, color: "var(--muted)" }}>
+          <span>© 2026 Pearl Health. For educational purposes — not a substitute for clinical diagnosis.</span>
+        </div>
       </div>
-      <div style={{ marginTop: 48, paddingTop: 22, borderTop: "1px solid var(--line)",
-        display: "flex", justifyContent: "space-between", fontSize: 12.5, color: "var(--muted)" }}>
-        <span>© 2026 Pearl Health. For educational purposes — not a substitute for clinical diagnosis.</span>
-        <span style={{ display: "flex", gap: 16 }}>
-          <span><Icon name="shield" size={12}/> HIPAA-compliant</span>
-          <span><Icon name="lock" size={12}/> End-to-end encrypted</span>
-        </span>
-      </div>
-    </div>
-  </footer>
-);
+    </footer>
+  );
+};
 
 export default Landing;
