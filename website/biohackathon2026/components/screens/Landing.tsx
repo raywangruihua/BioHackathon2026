@@ -65,7 +65,7 @@ const Hero = ({ go }) => (
           </button>
         </div>
 
-        <div style={{ marginTop: 36, display: "flex", alignItems: "center", gap: 16 }}>
+        {/* <div style={{ marginTop: 36, display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ display: "flex" }}>
             {["MR","TS","JN","KP"].map((n,i)=>(
               <div key={i} style={{ marginLeft: i?-10:0, border: "2px solid var(--bg)", borderRadius: "50%" }}>
@@ -79,7 +79,7 @@ const Hero = ({ go }) => (
             </div>
             <div>Trusted by <b style={{ color: "var(--ink)" }}>12,400+</b> women</div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Hero illustration */}
