@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Icon from '@/components/Icon';
-import Avatar from '@/components/Avatar';
+import Icon, { type IconName } from '@/components/Icon';
+import Avatar, { type AvatarTone } from '@/components/Avatar';
 import Eyebrow from '@/components/Eyebrow';
 import type { GoFn } from '@/lib/screens';
 
@@ -11,7 +11,7 @@ const Results = ({ go }: { go: GoFn }) => {
   const [primerOpen, setPrimerOpen] = useState(false);
 
   const overall = 64;
-  const indicators = [
+  const indicators: { name: string; score: number; othersScore: number; level: string; icon: IconName; detail: string }[] = [
     { name: "Cycle irregularity", score: 78, othersScore: 52, level: "high",   icon: "moon",
       detail: "You reported cycles often longer than 35 days. This is a primary Rotterdam criterion." },
     { name: "Skin & hair changes", score: 62, othersScore: 48, level: "moderate", icon: "sparkle",
@@ -227,13 +227,13 @@ const NextSteps = ({ go, onOpenPrimer }: { go: GoFn; onOpenPrimer: () => void })
     </h3>
     <div style={{ display: "grid", gap: 12 }}>
       {[
-        { n: "01", icon: "calendar", title: "Book a 20-minute consult",
+        { n: "01", icon: "calendar" as IconName, title: "Book a 20-minute consult",
           body: "We'll match you with a clinician familiar with PCOS. Share your report with one tap.",
           action: "Book a doctor", goTo: "booking" as const },
-        { n: "02", icon: "moon", title: "Start tracking your cycle",
+        { n: "02", icon: "moon" as IconName, title: "Start tracking your cycle",
           body: "Two weeks of cycle and symptom data will sharpen your report dramatically.",
           action: "Start tracking", goTo: "https://flo.health/" },
-        { n: "03", icon: "book", title: "Read: \"PCOS, plainly\"",
+        { n: "03", icon: "book" as IconName, title: "Read: \"PCOS, plainly\"",
           body: "A 6-minute primer on what PCOS is, what the Rotterdam criteria are, and what tests to ask for.",
           action: "Open article", goTo: "primer" as const },
       ].map((s, i) => (
@@ -442,8 +442,8 @@ const DoctorPick = ({ go }) => (
       We found two specialists who fit your profile.
     </h3>
     {[
-      { name: "Dr. Mira Chandra", spec: "Endocrinology · PCOS", years: 12, rate: 4.9, tone: "sage", soonest: "Tomorrow, 9:30 AM" },
-      { name: "Dr. Aanya Iyer",   spec: "Reproductive Health",    years: 8,  rate: 4.8, tone: "accent", soonest: "Mon, 11:00 AM" },
+      { name: "Dr. Mira Chandra", spec: "Endocrinology · PCOS", years: 12, rate: 4.9, tone: "sage" as AvatarTone, soonest: "Tomorrow, 9:30 AM" },
+      { name: "Dr. Aanya Iyer",   spec: "Reproductive Health",    years: 8,  rate: 4.8, tone: "accent" as AvatarTone, soonest: "Mon, 11:00 AM" },
     ].map((d, i) => (
       <div key={i} style={{ display: "flex", alignItems: "center", gap: 12,
         padding: "14px 14px", borderRadius: 18, background: "#fff",

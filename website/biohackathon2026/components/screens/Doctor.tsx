@@ -3,7 +3,7 @@
 import React from 'react';
 import Icon from '@/components/Icon';
 import Logo from '@/components/Logo';
-import Avatar from '@/components/Avatar';
+import Avatar, { type AvatarTone } from '@/components/Avatar';
 import Eyebrow from '@/components/Eyebrow';
 import Stat from '@/components/Stat';
 import type { GoFn } from '@/lib/screens';
@@ -11,7 +11,7 @@ import type { GoFn } from '@/lib/screens';
 
 // src/doctor.jsx — clinician view: patient queue + patient detail
 
-const PATIENTS = [
+const PATIENTS: { id: number; name: string; age: number; risk: number; band: string; tone: AvatarTone; last: string; cycles: string; flag: string; status: string }[] = [
   { id: 1, name: "Anya Verma",     age: 24, risk: 78, band: "high",     tone: "rose",
     last: "May 17, 2026",  cycles: "5/12 mo", flag: "Cycle > 35 days",  status: "New report" },
   { id: 2, name: "Priya Khanna",   age: 28, risk: 64, band: "moderate", tone: "accent",
@@ -69,7 +69,7 @@ const Doctor = ({ go }: { go: GoFn }) => {
   );
 };
 
-const DocStat = ({ label, value, delta, tone, deltaGood }) => {
+const DocStat = ({ label, value, delta, tone, deltaGood = false }) => {
   const tones = {
     primary: "var(--primary)", warn: "var(--warn)", sage: "var(--sage)", accent: "var(--accent)",
   };

@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/Icon';
+import Icon, { type IconName } from '@/components/Icon';
 import Logo from '@/components/Logo';
-import Avatar from '@/components/Avatar';
+import Avatar, { type AvatarTone } from '@/components/Avatar';
 import Eyebrow from '@/components/Eyebrow';
 import Stat from '@/components/Stat';
 import type { GoFn } from '@/lib/screens';
@@ -69,7 +69,7 @@ const Hero = ({ go }) => (
           <div style={{ display: "flex" }}>
             {["MR","TS","JN","KP"].map((n,i)=>(
               <div key={i} style={{ marginLeft: i?-10:0, border: "2px solid var(--bg)", borderRadius: "50%" }}>
-                <Avatar name={n} size={34} tone={["rose","accent","sage","warn"][i]} />
+                <Avatar name={n} size={34} tone={(["rose","accent","sage","warn"] as AvatarTone[])[i]} />
               </div>
             ))}
           </div>
@@ -177,7 +177,7 @@ const TrustStrip = () => (
 
 // ───────── What is PCOS ─────────
 const WhatIsPCOS = () => {
-  const signs = [
+  const signs: { icon: IconName; tone: string; title: string; body: string; stat: string; statLabel: string }[] = [
     {
       icon: "moon", tone: "rose",
       title: "Irregular cycles",
@@ -253,7 +253,7 @@ const WhatIsPCOS = () => {
 
 // ───────── How it works ─────────
 const HowItWorks = ({ go }) => {
-  const steps = [
+  const steps: { n: string; title: string; body: string; icon: IconName }[] = [
     { n: "01", title: "Take the assessment", body: "20 questions about your cycle, symptoms, and history — 3 minutes.", icon: "check" },
     { n: "02", title: "See your patterns", body: "A personal report shows which PCOS signs apply to you and how strongly.", icon: "chart" },
     { n: "03", title: "Talk to a clinician", body: "Book an appointment and get a more detailed screening if you are at risk.", icon: "chat" },

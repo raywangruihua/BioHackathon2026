@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Icon from '@/components/Icon';
+import Icon, { type IconName } from '@/components/Icon';
 import Logo from '@/components/Logo';
 import Avatar from '@/components/Avatar';
 import Eyebrow from '@/components/Eyebrow';
@@ -35,7 +35,7 @@ const SYMPTOM_DAYS = {
   "2026-4-3":  ["cramps"],
 };
 
-const SYMPTOMS = [
+const SYMPTOMS: { id: string; label: string; icon: IconName; color: string }[] = [
   { id: "cramps",  label: "Cramps",   icon: "drop",     color: "var(--primary)" },
   { id: "acne",    label: "Acne",     icon: "sparkle",  color: "var(--accent)" },
   { id: "mood",    label: "Mood",     icon: "heart",    color: "var(--warn)" },
@@ -127,7 +127,7 @@ const CalendarCard = ({ month, setMonth, selected, setSelected, logged }) => {
   // Monday-first; getDay returns 0 (Sun) -> shift to 6
   const startCol = (firstDay.getDay() + 6) % 7;
 
-  const cells = [];
+  const cells: (number | null)[] = [];
   for (let i = 0; i < startCol; i++) cells.push(null);
   for (let d = 1; d <= dayCount; d++) cells.push(d);
 
@@ -347,7 +347,7 @@ const CycleTrendCard = () => {
 const SymptomFrequency = ({ logged }) => {
   // Count per symptom across logged days
   const counts = {};
-  Object.values(logged).forEach(arr => arr.forEach(s => { counts[s] = (counts[s] || 0) + 1; }));
+  Object.values(logged).forEach(arr => (arr as string[]).forEach(s => { counts[s] = (counts[s] || 0) + 1; }));
   const rows = SYMPTOMS.map(s => ({ ...s, n: counts[s.id] || 0 })).sort((a,b) => b.n - a.n);
   const max = Math.max(...rows.map(r => r.n), 1);
 
