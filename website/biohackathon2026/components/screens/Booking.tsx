@@ -47,7 +47,7 @@ const Booking = ({ go }: { go: GoFn }) => {
           </h1>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 22 }}>
+        <div className="rg-booking">
           {/* Left: doctor list + filters */}
           <div>
             {/* <div className="card" style={{ padding: 20, borderRadius: 22, marginBottom: 14 }}>
@@ -70,7 +70,7 @@ const Booking = ({ go }: { go: GoFn }) => {
           </div>
 
           {/* Right: date/time picker for selected doctor */}
-          <div className="card" style={{ padding: 28, borderRadius: 28, position: "sticky", top: 90 }}>
+          <div className="card booking-sticky" style={{ padding: 28, borderRadius: 28, position: "sticky", top: 90 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 22 }}>
               <Avatar name={doctor.name} tone={doctor.tone} size={56}/>
               <div style={{ flex: 1 }}>

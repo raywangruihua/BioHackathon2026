@@ -215,3 +215,51 @@ a {
   -webkit-backdrop-filter: saturate(180%) blur(14px);
   border-bottom: 1px solid var(--line);
 }
+
+/* ──── Responsive grid utilities ──── */
+.rg-hero     { display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center; }
+.rg-2        { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.rg-3        { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.rg-4        { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; }
+.rg-results-top { display: grid; grid-template-columns: 1.05fr 1.4fr; gap: 22px; }
+.rg-next     { display: grid; grid-template-columns: 1.3fr 1fr; gap: 22px; }
+.rg-booking  { display: grid; grid-template-columns: 1fr 1.2fr; gap: 22px; }
+.rg-footer   { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 32px; }
+.rg-what-head { display: grid; grid-template-columns: 1fr 1.4fr; gap: 64px; align-items: end; }
+.rg-teaser   { display: grid; grid-template-columns: 1.1fr 1fr; gap: 64px; align-items: center; }
+.rg-howto-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; }
+.risk-inner  { display: flex; align-items: center; gap: 28px; }
+.risk-dial   { position: relative; width: 220px; height: 220px; flex: none; }
+.cta-inner   { padding: 72px 60px; }
+
+/* 1024px — 3-col → 2-col, header stacks */
+@media (max-width: 1024px) {
+  .rg-3          { grid-template-columns: 1fr 1fr; }
+  .rg-4          { grid-template-columns: 1fr 1fr; gap: 20px; }
+  .rg-footer     { grid-template-columns: 1fr 1fr; gap: 24px; }
+  .rg-howto-head { flex-direction: column; align-items: flex-start; }
+}
+
+/* 768px — 2-col layouts collapse to 1-col */
+@media (max-width: 768px) {
+  .rg-hero       { grid-template-columns: 1fr; gap: 32px; }
+  .rg-hero-art   { display: none; }
+  .rg-2          { grid-template-columns: 1fr; }
+  .rg-results-top { grid-template-columns: 1fr; }
+  .rg-next       { grid-template-columns: 1fr; }
+  .rg-booking    { grid-template-columns: 1fr; }
+  .rg-what-head  { grid-template-columns: 1fr; gap: 18px; }
+  .rg-teaser     { grid-template-columns: 1fr; gap: 32px; }
+  .booking-sticky { position: static !important; }
+}
+
+/* 640px — narrow screens: remaining 2-col → 1-col, reduced padding */
+@media (max-width: 640px) {
+  .container     { padding: 0 18px; }
+  .rg-3          { grid-template-columns: 1fr; }
+  .rg-footer     { grid-template-columns: 1fr; }
+  .risk-inner    { flex-direction: column; align-items: flex-start; }
+  .risk-dial     { width: 160px; height: 160px; }
+  .card-pad-lg   { padding: 28px 20px !important; }
+  .cta-inner     { padding: 48px 24px !important; }
+}

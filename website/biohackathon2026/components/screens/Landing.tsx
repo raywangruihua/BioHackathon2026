@@ -41,11 +41,10 @@ const Hero = ({ go }) => (
         filter: "blur(8px)", opacity: .8 }}/>
     </div>
 
-    <div className="container" style={{ position: "relative", zIndex: 1,
-      display: "grid", gridTemplateColumns: "1.05fr .95fr", gap: 56, alignItems: "center" }}>
+    <div className="container rg-hero" style={{ position: "relative", zIndex: 1 }}>
       <div>
         <Eyebrow>For women navigating PCOS</Eyebrow>
-        <h1 className="serif" style={{ fontSize: 84, lineHeight: 1.02, margin: "20px 0 0",
+        <h1 className="serif" style={{ fontSize: "clamp(40px, 7vw, 84px)", lineHeight: 1.02, margin: "20px 0 0",
           fontWeight: 500, letterSpacing: "-.025em" }}>
           Your body has been
           <br />
@@ -84,7 +83,7 @@ const Hero = ({ go }) => (
       </div>
 
       {/* Hero illustration */}
-      <HeroCard />
+      <div className="rg-hero-art"><HeroCard /></div>
     </div>
   </section>
 );
@@ -163,7 +162,7 @@ const HeroCard = () => (
 const TrustStrip = () => (
   <section style={{ padding: "16px 0 64px" }}>
     <div className="container">
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32,
+      <div className="rg-4" style={{
         padding: "28px 36px", borderRadius: 24,
         background: "linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.4))",
         border: "1px solid var(--line)" }}>
@@ -201,10 +200,10 @@ const WhatIsPCOS = () => {
   return (
     <section style={{ padding: "80px 0" }}>
       <div className="container">
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 64, alignItems: "end" }}>
+        <div className="rg-what-head">
           <div>
             <Eyebrow>What is PCOS</Eyebrow>
-            <h2 className="serif" style={{ fontSize: 56, lineHeight: 1.05, margin: "14px 0 0",
+            <h2 className="serif" style={{ fontSize: "clamp(34px, 5vw, 56px)", lineHeight: 1.05, margin: "14px 0 0",
               fontWeight: 500, letterSpacing: "-.02em" }}>
               A hormonal condition,<br/>
               <span className="serif-it" style={{ color: "var(--primary)" }}>not a personal failing.</span>
@@ -217,7 +216,7 @@ const WhatIsPCOS = () => {
           </p>
         </div>
 
-        <div style={{ marginTop: 56, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22 }}>
+        <div className="rg-3" style={{ marginTop: 56 }}>
           {signs.map((s, i) => (
             <div key={i} className="card" style={{ padding: 28, borderRadius: 26 }}>
               <div style={{ width: 52, height: 52, borderRadius: 16,
@@ -262,10 +261,10 @@ const HowItWorks = ({ go }) => {
   return (
     <section style={{ padding: "80px 0", background: "var(--bg-tint)" }}>
       <div className="container">
-        <div style={{ display: "flex", alignItems: "end", justifyContent: "space-between", gap: 32 }}>
+        <div className="rg-howto-head">
           <div>
             <Eyebrow color="var(--accent)">How Pearl works</Eyebrow>
-            <h2 className="serif" style={{ fontSize: 56, lineHeight: 1.05, margin: "14px 0 0",
+            <h2 className="serif" style={{ fontSize: "clamp(34px, 5vw, 56px)", lineHeight: 1.05, margin: "14px 0 0",
               fontWeight: 500, letterSpacing: "-.02em", maxWidth: 720 }}>
               From <span className="serif-it" style={{ color: "var(--accent)" }}>“something feels off”</span> to a clear next step.
             </h2>
@@ -275,7 +274,7 @@ const HowItWorks = ({ go }) => {
           </button>
         </div>
 
-        <div style={{ marginTop: 56, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 20 }}>
+        <div className="rg-3" style={{ marginTop: 56 }}>
           {steps.map((s, i) => (
             <div key={i} style={{ position: "relative" }}>
               <div className="card" style={{ padding: 26, borderRadius: 24, height: "100%",
@@ -304,7 +303,7 @@ const HowItWorks = ({ go }) => {
 // ───────── Assessment teaser ─────────
 const AssessmentTeaser = ({ go }) => (
   <section style={{ padding: "100px 0" }}>
-    <div className="container" style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 64, alignItems: "center" }}>
+    <div className="container rg-teaser">
       <div className="card" style={{ padding: 36, borderRadius: 32, position: "relative",
         background: "linear-gradient(180deg, #fff, #FFF6F1)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -356,7 +355,7 @@ const AssessmentTeaser = ({ go }) => (
 
       <div>
         <Eyebrow>The assessment</Eyebrow>
-        <h2 className="serif" style={{ fontSize: 52, lineHeight: 1.05, margin: "14px 0 16px",
+        <h2 className="serif" style={{ fontSize: "clamp(30px, 4.5vw, 52px)", lineHeight: 1.05, margin: "14px 0 16px",
           fontWeight: 500, letterSpacing: "-.02em" }}>
           Questions that feel <span className="serif-it" style={{ color: "var(--primary)" }}>like a friend</span> asked them.
         </h2>
@@ -438,7 +437,7 @@ const FinalCTA = ({ go }) => (
   <section style={{ padding: "100px 0" }}>
     <div className="container">
       <div style={{
-        position: "relative", overflow: "hidden", borderRadius: 36, padding: "72px 60px",
+        position: "relative", overflow: "hidden", borderRadius: 36,
         background: "linear-gradient(135deg, var(--primary) 0%, var(--primary-deep) 70%, var(--accent) 130%)",
         color: "#fff",
       }}>
@@ -447,9 +446,9 @@ const FinalCTA = ({ go }) => (
         <div aria-hidden style={{ position: "absolute", right: 80, bottom: -80, width: 220, height: 220,
           borderRadius: "50%", background: "radial-gradient(circle at 40% 40%, rgba(255,255,255,.45), transparent 65%)" }}/>
 
-        <div style={{ position: "relative", maxWidth: 720 }}>
+        <div className="cta-inner" style={{ position: "relative", maxWidth: 720 }}>
           <Eyebrow color="rgba(255,255,255,.8)">Start today</Eyebrow>
-          <h2 className="serif" style={{ fontSize: 64, lineHeight: 1.03, margin: "16px 0 0",
+          <h2 className="serif" style={{ fontSize: "clamp(36px, 5.5vw, 64px)", lineHeight: 1.03, margin: "16px 0 0",
             fontWeight: 500, letterSpacing: "-.025em" }}>
             Three minutes today.<br/>
             <span className="serif-it">A clearer picture for life.</span>
@@ -495,7 +494,7 @@ const Footer = ({ go }: { go: GoFn }) => {
   return (
     <footer style={{ padding: "56px 0 32px", borderTop: "1px solid var(--line)" }}>
       <div className="container">
-        <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: 32 }}>
+        <div className="rg-footer">
           <div>
             <Logo size={32}/>
             <p style={{ fontSize: 13.5, color: "var(--ink-2)", marginTop: 14, maxWidth: 320, lineHeight: 1.55 }}>

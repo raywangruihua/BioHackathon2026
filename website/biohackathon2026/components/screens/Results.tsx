@@ -32,7 +32,7 @@ const Results = ({ go }: { go: GoFn }) => {
           marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
           <div>
             <Eyebrow>Your report · May 17, 2026</Eyebrow>
-            <h1 className="serif" style={{ fontSize: 48, lineHeight: 1.05, margin: "12px 0 0",
+            <h1 className="serif" style={{ fontSize: "clamp(28px, 4vw, 48px)", lineHeight: 1.05, margin: "12px 0 0",
               fontWeight: 500, letterSpacing: "-.02em" }}>
               Hi Anya — <span className="serif-it" style={{ color: "var(--primary)" }}>
               here's what we found.</span>
@@ -47,7 +47,7 @@ const Results = ({ go }: { go: GoFn }) => {
         </div>
 
         {/* Top row — risk + summary */}
-        <div style={{ display: "grid", gridTemplateColumns: "1.05fr 1.4fr", gap: 22, marginBottom: 22 }}>
+        <div className="rg-results-top" style={{ marginBottom: 22 }}>
           <RiskCard score={overall} band={band}/>
           <SummaryCard band={band} go={go}/>
         </div>
@@ -69,13 +69,13 @@ const Results = ({ go }: { go: GoFn }) => {
             </button>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="rg-2" style={{ gap: 12 }}>
             {indicators.map((ind, i) => <IndicatorRow key={i} {...ind}/>)}
           </div>
         </div>
 
         {/* Next steps */}
-        <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 22 }}>
+        <div className="rg-next">
           <NextSteps go={go} onOpenPrimer={() => setPrimerOpen(true)}/>
           <DoctorPick go={go}/>
         </div>
@@ -100,10 +100,9 @@ const RiskCard = ({ score, band }) => {
   const dash = (score / 100) * C;
 
   return (
-    <div className="card" style={{ padding: 32, borderRadius: 28, position: "relative",
-      display: "flex", alignItems: "center", gap: 28 }}>
-      <div style={{ position: "relative", width: 220, height: 220, flex: "none" }}>
-        <svg viewBox="0 0 220 220" width="220" height="220">
+    <div className="card risk-inner" style={{ padding: 32, borderRadius: 28, position: "relative" }}>
+      <div className="risk-dial">
+        <svg viewBox="0 0 220 220" width="100%" height="100%">
           <circle cx="110" cy="110" r={R} fill="none"
             stroke="rgba(42,31,37,.06)" strokeWidth="14"/>
           <circle cx="110" cy="110" r={R} fill="none"

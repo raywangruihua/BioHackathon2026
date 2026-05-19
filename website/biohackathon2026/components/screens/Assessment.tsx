@@ -178,7 +178,7 @@ const Assessment = ({ go }: { go: GoFn }) => {
 };
 
 const Welcome = ({ onStart }) => (
-  <div className="card" style={{ maxWidth: 760, margin: "0 auto", padding: "64px 56px",
+  <div className="card card-pad-lg" style={{ maxWidth: 760, margin: "0 auto", padding: "64px 56px",
     borderRadius: 32, textAlign: "center" }}>
     <div style={{ width: 80, height: 80, borderRadius: "50%", margin: "0 auto 28px",
       background: "radial-gradient(circle at 30% 30%, #fff, var(--primary-soft) 50%, var(--primary) 120%)",
@@ -194,7 +194,7 @@ const Welcome = ({ onStart }) => (
       and your answers stay private — even from us.
     </p>
 
-    <div style={{ display: "flex", gap: 28, justifyContent: "center", marginTop: 36, marginBottom: 36,
+    <div style={{ display: "flex", gap: 28, justifyContent: "center", flexWrap: "wrap", marginTop: 36, marginBottom: 36,
       padding: "20px 24px", background: "var(--bg-tint)", borderRadius: 20 }}>
       {[
         ["calendar", "10 questions", "across cycle, skin & body"],
@@ -226,7 +226,7 @@ const Welcome = ({ onStart }) => (
 const QuestionCard = ({ q, value, onPick, onContinue, canContinue }) => {
   const multi = q.kind === "options-multi";
   return (
-    <div className="card" style={{ maxWidth: 760, margin: "0 auto", padding: "48px 48px 36px",
+    <div className="card card-pad-lg" style={{ maxWidth: 760, margin: "0 auto", padding: "48px 48px 36px",
       borderRadius: 32 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{ width: 36, height: 36, borderRadius: 12, background: "var(--primary-soft)",
@@ -283,7 +283,7 @@ const QuestionCard = ({ q, value, onPick, onContinue, canContinue }) => {
 };
 
 const DoneCard = ({ go }) => (
-  <div className="card" style={{ maxWidth: 760, margin: "0 auto", padding: "64px 56px",
+  <div className="card card-pad-lg" style={{ maxWidth: 760, margin: "0 auto", padding: "64px 56px",
     borderRadius: 32, textAlign: "center", position: "relative", overflow: "hidden" }}>
     <div aria-hidden style={{ position: "absolute", inset: -40, opacity: .5,
       background: "radial-gradient(circle at 50% 0%, var(--primary-soft), transparent 60%)" }}/>
