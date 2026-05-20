@@ -41,6 +41,31 @@ const BINARY_ENDO: Record<string, [string, string]> = {
   "Infertility_Status": ["history of infertility",          "no recorded fertility barriers"],
 };
 
+const DEMO_PCOS_SHAP: ShapSection = {
+  toward: [
+    { feature: "Cycle.R.I.",       label: "Menstrual cycle",        value: 4, formatted: "Irregular", phi:  0.42, z: null },
+    { feature: "Weight.gain.Y.N.", label: "Weight gain",            value: 1, formatted: "Yes",       phi:  0.31, z: null },
+    { feature: "hair.growth.Y.N.", label: "Excessive hair growth",  value: 1, formatted: "Yes",       phi:  0.22, z: null },
+  ],
+  away: [
+    { feature: "Reg.Exercise.Y.N.", label: "Regular exercise", value: 1,    formatted: "Yes",   phi: -0.18, z: null },
+    { feature: "Pimples.Y.N.",      label: "Acne / pimples",   value: 0,    formatted: "No",    phi: -0.12, z: null },
+    { feature: "BMI",               label: "BMI",               value: 22.5, formatted: "22.50", phi: -0.09, z: -0.8 },
+  ],
+};
+
+const DEMO_ENDO_SHAP: ShapSection = {
+  toward: [
+    { feature: "Dysmenorrhea_Score", label: "Dysmenorrhea score", value: 4, formatted: "4.00", phi:  0.15, z: 0.9 },
+    { feature: "Pelvic_Pain_Score",  label: "Pelvic pain score",  value: 3, formatted: "3.00", phi:  0.09, z: 0.5 },
+  ],
+  away: [
+    { feature: "Family_History",     label: "Family history of endometriosis", value: 0, formatted: "No",    phi: -0.21, z: null },
+    { feature: "Infertility_Status", label: "Infertility history",             value: 0, formatted: "No",    phi: -0.17, z: null },
+    { feature: "Age_of_Menarche",    label: "Age of menarche",                 value: 13, formatted: "13.00", phi: -0.08, z: 0.2 },
+  ],
+};
+
 function getPatientPhrase(feat: ShapFeature, condition: "PCOS" | "Endo"): string {
   if (condition === "PCOS") {
     if (feat.feature === "Cycle.R.I.")
@@ -74,8 +99,8 @@ const Results = ({ go }: { go: GoFn }) => {
   const endoProb  = result?.endoProb  ?? 38;
   const pcosClass = result?.pcosClass ?? "PCOS Positive";
   const endoClass = result?.endoClass ?? "Endometriosis Negative";
-  const pcosShap  = result?.pcosShap;
-  const endoShap  = result?.endoShap;
+  const pcosShap  = result?.pcosShap ?? DEMO_PCOS_SHAP;
+  const endoShap  = result?.endoShap ?? DEMO_ENDO_SHAP;
 
   // Overall score = highest of the two probabilities
   const overall = Math.max(pcosProb, endoProb);
@@ -233,51 +258,31 @@ const RiskCard = ({ score, band, pcosClass, endoClass }: {
 
 const SummaryCard = ({ pcosProb, endoProb, pcosClass, endoClass, pcosShap, endoShap, go }: {
   pcosProb: number; endoProb: number; pcosClass: string; endoClass: string;
-  pcosShap?: ShapSection; endoShap?: ShapSection; go: GoFn;
-}) => {
-  const hasShap = !!(pcosShap || endoShap);
-  const bullets = hasShap ? [] : [
-    `PCOS screening score: ${Math.round(pcosProb)}% — ${riskBand(pcosProb)} likelihood`,
-    `Endometriosis screening score: ${Math.round(endoProb)}% — ${riskBand(endoProb)} likelihood`,
-    "A clinician can confirm or rule out either condition with targeted tests",
-  ];
+  pcosShap: ShapSection; endoShap: ShapSection; go: GoFn;
+}) => (
+  <div className="card" style={{ padding: 32, borderRadius: 28,
+    background: "linear-gradient(160deg, #fff, var(--bg-tint))" }}>
+    <Eyebrow>What this means</Eyebrow>
+    <h3 className="serif" style={{ fontSize: 24, margin: "14px 0 12px", fontWeight: 500,
+      lineHeight: 1.3, letterSpacing: "-.01em" }}>
+      Your results are ready —
+      <span className="serif-it" style={{ color: "var(--primary)" }}> here's the summary.</span>
+    </h3>
 
-  return (
-    <div className="card" style={{ padding: 32, borderRadius: 28,
-      background: "linear-gradient(160deg, #fff, var(--bg-tint))" }}>
-      <Eyebrow>What this means</Eyebrow>
-      <h3 className="serif" style={{ fontSize: 24, margin: "14px 0 12px", fontWeight: 500,
-        lineHeight: 1.3, letterSpacing: "-.01em" }}>
-        Your results are ready —
-        <span className="serif-it" style={{ color: "var(--primary)" }}> here's the summary.</span>
-      </h3>
-
-      {hasShap ? (
-        <div style={{ display: "grid", gap: 12, margin: "16px 0 22px" }}>
-          <PatientShapSection conditionKey="PCOS" conditionLabel="PCOS"
-            prob={pcosProb} condClass={pcosClass} shap={pcosShap}/>
-          <PatientShapSection conditionKey="Endo" conditionLabel="Endometriosis"
-            prob={endoProb} condClass={endoClass} shap={endoShap}/>
-        </div>
-      ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: "18px 0 22px", display: "grid", gap: 10 }}>
-          {bullets.map((t, i) => (
-            <li key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 14 }}>
-              <Icon name="dot" size={10} style={{ color: "var(--primary)", marginTop: 5, flex: "none" }}/>
-              {t}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <button className="btn btn-rose btn-sm" onClick={() => go("booking")}>
-          Book a clinician <Icon name="arrow" size={14}/>
-        </button>
-      </div>
+    <div style={{ display: "grid", gap: 12, margin: "16px 0 22px" }}>
+      <PatientShapSection conditionKey="PCOS" conditionLabel="PCOS"
+        prob={pcosProb} condClass={pcosClass} shap={pcosShap}/>
+      <PatientShapSection conditionKey="Endo" conditionLabel="Endometriosis"
+        prob={endoProb} condClass={endoClass} shap={endoShap}/>
     </div>
-  );
-};
+
+    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <button className="btn btn-rose btn-sm" onClick={() => go("booking")}>
+        Book a clinician <Icon name="arrow" size={14}/>
+      </button>
+    </div>
+  </div>
+);
 
 // ── Patient SHAP section ────────────────────────────────────────────────────
 
