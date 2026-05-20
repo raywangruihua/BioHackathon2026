@@ -1,0 +1,30 @@
+# Training data — large, not needed at runtime
+*.csv
+
+# Training and analysis scripts
+app.R
+app_refined.R
+full_data.R
+full_endo.R
+partial_data.R
+partial_endo.R
+
+# Full (Stage 2) model files — API only uses partial models
+full_endo_*
+pcos_feature_names.rds
+pcos_n_pcs.rds
+pcos_pca_model.rds
+pcos_xgboost_model.json
+
+# Tuning artefacts — not needed at runtime
+partial_endo_best_nrounds.rds
+partial_endo_best_params.rds
+
+# R project / IDE files
+*.Rproj
+.Rproj.user
+.Rhistory
+.DS_Store
+
+# Images
+*.png
