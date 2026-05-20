@@ -7,7 +7,7 @@ import Avatar, { type AvatarTone } from '@/components/Avatar';
 import Eyebrow from '@/components/Eyebrow';
 import Stat from '@/components/Stat';
 import type { GoFn } from '@/lib/screens';
-import type { ScreenResult, ShapSection } from '@/components/screens/Assessment';
+import type { ScreenResult, FullScreenResult, ShapSection } from '@/components/screens/Assessment';
 
 
 // src/doctor.jsx — clinician view: patient queue + patient detail
@@ -29,12 +29,18 @@ const PATIENTS: { id: number; name: string; age: number; risk: number; band: str
 
 const Doctor = ({ go }: { go: GoFn }) => {
   const [selected, setSelected] = React.useState(PATIENTS[0]);
-  const [screenResult, setScreenResult] = React.useState<ScreenResult | null>(null);
+  const [screenResult, setScreenResult]   = React.useState<ScreenResult | null>(null);
+  const [screenInputs, setScreenInputs]   = React.useState<Record<string, number> | null>(null);
+  const [fullResult,   setFullResult]     = React.useState<FullScreenResult | null>(null);
 
   React.useEffect(() => {
     try {
       const raw = localStorage.getItem("screenResult");
       if (raw) setScreenResult(JSON.parse(raw) as ScreenResult);
+      const inp = localStorage.getItem("screenInputs");
+      if (inp) setScreenInputs(JSON.parse(inp) as Record<string, number>);
+      const full = localStorage.getItem("fullScreenResult");
+      if (full) setFullResult(JSON.parse(full) as FullScreenResult);
     } catch {}
   }, []);
 
@@ -71,7 +77,9 @@ const Doctor = ({ go }: { go: GoFn }) => {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr", gap: 22 }}>
           <Queue selected={selected} setSelected={setSelected}/>
-          <PatientDetail patient={selected} screenResult={screenResult} go={go}/>
+          <PatientDetail patient={selected} screenResult={screenResult}
+            screenInputs={screenInputs} fullResult={fullResult}
+            setFullResult={setFullResult} go={go}/>
         </div>
       </div>
     </div>
@@ -243,7 +251,7 @@ const ClinicalShapSection = ({ condition, prob, shap }: {
 };
 
 // ───────── Patient detail ─────────
-const PatientDetail = ({ patient, screenResult, go }) => {
+const PatientDetail = ({ patient, screenResult, screenInputs, fullResult, setFullResult, go }) => {
   const tone = ({
     high:     { fg: "var(--primary)", soft: "var(--primary-soft)", label: "High likelihood" },
     moderate: { fg: "var(--warn)",    soft: "var(--warn-soft)",    label: "Moderate" },
@@ -331,10 +339,154 @@ const PatientDetail = ({ patient, screenResult, go }) => {
         </div>
       )}
 
+      <ClinicalForm screenInputs={screenInputs} fullResult={fullResult} setFullResult={setFullResult}/>
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
         <LabsCard/>
         <NotesCard/>
       </div>
+    </div>
+  );
+};
+
+// ───────── Clinical data entry form ─────────
+const CLINICAL_FIELDS: { key: string; label: string; unit: string; group: string; min?: number; max?: number; step?: number }[] = [
+  { key: "pulse",       label: "Pulse rate",            unit: "bpm",      group: "Vitals",      min: 40,  max: 180 },
+  { key: "rr",          label: "Respiratory rate",      unit: "br/min",   group: "Vitals",      min: 5,   max: 50 },
+  { key: "hb",          label: "Haemoglobin",           unit: "g/dL",     group: "Vitals",      min: 1,   max: 20, step: 0.1 },
+  { key: "bp_sys",      label: "Systolic BP",           unit: "mmHg",     group: "Vitals",      min: 60,  max: 220 },
+  { key: "bp_dia",      label: "Diastolic BP",          unit: "mmHg",     group: "Vitals",      min: 40,  max: 140 },
+  { key: "fsh",         label: "FSH",                   unit: "mIU/mL",   group: "Hormones",    min: 0, step: 0.1 },
+  { key: "lh",          label: "LH",                    unit: "mIU/mL",   group: "Hormones",    min: 0, step: 0.1 },
+  { key: "tsh",         label: "TSH",                   unit: "mIU/L",    group: "Hormones",    min: 0, step: 0.01 },
+  { key: "amh",         label: "AMH",                   unit: "ng/mL",    group: "Hormones",    min: 0, step: 0.1 },
+  { key: "prl",         label: "Prolactin",             unit: "ng/mL",    group: "Hormones",    min: 0, step: 0.1 },
+  { key: "prg",         label: "Progesterone",          unit: "ng/mL",    group: "Hormones",    min: 0, step: 0.1 },
+  { key: "hcg_i",       label: "Beta-HCG I",            unit: "mIU/mL",   group: "Blood",       min: 0 },
+  { key: "hcg_ii",      label: "Beta-HCG II",           unit: "mIU/mL",   group: "Blood",       min: 0 },
+  { key: "vit_d3",      label: "Vitamin D3",            unit: "ng/mL",    group: "Blood",       min: 0, step: 0.1 },
+  { key: "rbs",         label: "Random blood sugar",    unit: "mg/dL",    group: "Blood",       min: 50, max: 500 },
+  { key: "ca_125",      label: "CA-125",                unit: "U/mL",     group: "Blood",       min: 0, step: 0.1 },
+  { key: "crp",         label: "CRP",                   unit: "mg/L",     group: "Blood",       min: 0, step: 0.1 },
+  { key: "follicle_l",  label: "Follicle count (L)",    unit: "",         group: "Ultrasound",  min: 0 },
+  { key: "follicle_r",  label: "Follicle count (R)",    unit: "",         group: "Ultrasound",  min: 0 },
+  { key: "avg_fsize_l", label: "Avg follicle size (L)", unit: "mm",       group: "Ultrasound",  min: 0, step: 0.1 },
+  { key: "avg_fsize_r", label: "Avg follicle size (R)", unit: "mm",       group: "Ultrasound",  min: 0, step: 0.1 },
+  { key: "endometrium", label: "Endometrial thickness", unit: "mm",       group: "Ultrasound",  min: 0, step: 0.1 },
+  { key: "mental_health", label: "Mental health score", unit: "/100",     group: "Other",       min: 0, max: 100 },
+];
+
+const GROUPS = ["Vitals", "Hormones", "Blood", "Ultrasound", "Other"] as const;
+
+const ClinicalForm = ({ screenInputs, fullResult, setFullResult }) => {
+  const [open,    setOpen]    = React.useState(false);
+  const [values,  setValues]  = React.useState<Record<string, string>>({});
+  const [loading, setLoading] = React.useState(false);
+  const [error,   setError]   = React.useState<string | null>(null);
+  const [done,    setDone]    = React.useState(!!fullResult);
+
+  const set = (key: string, val: string) => setValues(v => ({ ...v, [key]: val }));
+
+  const handleSubmit = async () => {
+    setLoading(true); setError(null);
+    const numeric: Record<string, number> = {};
+    for (const f of CLINICAL_FIELDS) {
+      const v = parseFloat(values[f.key] ?? "");
+      if (!isNaN(v)) numeric[f.key] = v;
+    }
+    // auto-calc FSH/LH if both present
+    if (numeric.fsh != null && numeric.lh != null && numeric.lh > 0)
+      numeric.fsh_lh = parseFloat((numeric.fsh / numeric.lh).toFixed(2));
+
+    const body = { ...(screenInputs ?? {}), ...numeric };
+    try {
+      const res = await fetch("/api/screen/full", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
+      const data = await res.json() as FullScreenResult;
+      localStorage.setItem("fullScreenResult", JSON.stringify(data));
+      setFullResult(data);
+      setDone(true); setOpen(false);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+        marginBottom: open ? 14 : 0 }}>
+        <div>
+          <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase",
+            letterSpacing: ".08em", fontWeight: 600 }}>Full Clinical Screening</div>
+          {done && !open && (
+            <div style={{ fontSize: 12, color: "var(--sage)", marginTop: 2 }}>
+              <Icon name="check" size={11}/> Report generated — visible on patient results page
+            </div>
+          )}
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={() => setOpen(o => !o)}>
+          {open ? "Cancel" : done ? "Re-run" : "Enter clinical data"}
+          <Icon name={open ? "close" : "arrow"} size={12}/>
+        </button>
+      </div>
+
+      {open && (
+        <div style={{ padding: 20, borderRadius: 18, border: "1px solid var(--line)",
+          background: "rgba(255,255,255,.5)" }}>
+          {!screenInputs && (
+            <div style={{ padding: "10px 14px", borderRadius: 12, background: "var(--warn-soft)",
+              color: "#8A4F1F", fontSize: 12.5, marginBottom: 14 }}>
+              No pre-screening data found. Ask the patient to complete the assessment first.
+            </div>
+          )}
+
+          {GROUPS.map(group => {
+            const fields = CLINICAL_FIELDS.filter(f => f.group === group);
+            return (
+              <div key={group} style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase",
+                  letterSpacing: ".08em", fontWeight: 600, marginBottom: 8 }}>{group}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {fields.map(f => (
+                    <div key={f.key}>
+                      <label style={{ fontSize: 11.5, color: "var(--ink-2)", fontWeight: 500,
+                        display: "block", marginBottom: 4 }}>
+                        {f.label}{f.unit ? ` (${f.unit})` : ""}
+                      </label>
+                      <input
+                        type="number" min={f.min} max={f.max} step={f.step ?? 1}
+                        value={values[f.key] ?? ""}
+                        onChange={e => set(f.key, e.target.value)}
+                        placeholder="—"
+                        style={{ width: "100%", height: 38, padding: "0 10px", borderRadius: 10,
+                          border: "1px solid var(--line)", background: "#fff",
+                          fontSize: 13, outline: "none", boxSizing: "border-box" }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+
+          {error && (
+            <div style={{ padding: "10px 14px", borderRadius: 12, background: "var(--primary-soft)",
+              color: "var(--primary-deep)", fontSize: 12.5, marginBottom: 12 }}>{error}</div>
+          )}
+
+          <button className="btn btn-primary" style={{ width: "100%" }}
+            onClick={handleSubmit} disabled={loading || !screenInputs}>
+            {loading
+              ? "Running full screening…"
+              : <><Icon name="sparkle" size={14}/> Generate full screening report</>}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

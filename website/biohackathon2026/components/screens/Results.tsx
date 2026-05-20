@@ -5,7 +5,7 @@ import Icon, { type IconName } from '@/components/Icon';
 import Avatar, { type AvatarTone } from '@/components/Avatar';
 import Eyebrow from '@/components/Eyebrow';
 import type { GoFn } from '@/lib/screens';
-import type { ScreenResult, ShapSection, ShapFeature } from '@/components/screens/Assessment';
+import type { ScreenResult, FullScreenResult, RotterdamCriteria, ShapSection, ShapFeature } from '@/components/screens/Assessment';
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -20,9 +20,15 @@ function loadResult(): ScreenResult | null {
   try {
     const raw = localStorage.getItem("screenResult");
     return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
+}
+
+function loadFullResult(): FullScreenResult | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("fullScreenResult");
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
 }
 
 const BINARY_PCOS: Record<string, [string, string]> = {
@@ -64,6 +70,47 @@ const DEMO_ENDO_SHAP: ShapSection = {
     { feature: "Infertility_Status", label: "Infertility history",             value: 0, formatted: "No",    phi: -0.17, z: null },
     { feature: "Age_of_Menarche",    label: "Age of menarche",                 value: 13, formatted: "13.00", phi: -0.08, z: 0.2 },
   ],
+};
+
+const DEMO_FULL_RESULT: FullScreenResult = {
+  pcosProb:  74,
+  pcosClass: "PCOS Positive",
+  endoProb:  42,
+  endoClass: "Endometriosis Negative",
+  pcosShap: {
+    toward: [
+      { feature: "AMH.ng.mL",        label: "AMH",              value: 6.8,  formatted: "6.80",      phi:  0.52, z:  2.3 },
+      { feature: "Follicle.No...L.", label: "Follicle count L", value: 14,   formatted: "14.00",     phi:  0.41, z:  1.8 },
+      { feature: "Follicle.No...R.", label: "Follicle count R", value: 16,   formatted: "16.00",     phi:  0.38, z:  2.0 },
+      { feature: "LH.mIU.mL.",       label: "LH",               value: 9.2,  formatted: "9.20",      phi:  0.29, z:  1.6 },
+      { feature: "Cycle.R.I.",        label: "Menstrual cycle",  value: 4,    formatted: "Irregular", phi:  0.22, z:  null },
+    ],
+    away: [
+      { feature: "FSH.mIU.mL.",      label: "FSH",              value: 5.1,  formatted: "5.10",      phi: -0.18, z: -0.2 },
+      { feature: "TSH..mIU.L.",       label: "TSH",              value: 2.1,  formatted: "2.10",      phi: -0.14, z: -0.1 },
+      { feature: "Reg.Exercise.Y.N.", label: "Regular exercise", value: 1,    formatted: "Yes",       phi: -0.11, z:  null },
+    ],
+  },
+  endoShap: {
+    toward: [
+      { feature: "Dysmenorrhea_Score", label: "Dysmenorrhea score", value: 6,  formatted: "6.00",  phi:  0.21, z:  1.1 },
+      { feature: "CA_125_Level",       label: "CA-125",             value: 38, formatted: "38.00", phi:  0.17, z:  1.4 },
+      { feature: "Pelvic_Pain_Score",  label: "Pelvic pain score",  value: 4,  formatted: "4.00",  phi:  0.12, z:  0.8 },
+    ],
+    away: [
+      { feature: "Family_History",     label: "Family history",     value: 0,  formatted: "No",    phi: -0.19, z:  null },
+      { feature: "CRP_Level",          label: "CRP",                value: 1.2,formatted: "1.20",  phi: -0.14, z: -0.5 },
+      { feature: "Infertility_Status", label: "Infertility history",value: 0,  formatted: "No",    phi: -0.09, z:  null },
+    ],
+  },
+  rotterdam: {
+    hyperandrogenism: true,
+    oligoAnovulation: true,
+    pcom:             true,
+    met:              true,
+    metCount:         3,
+    pcosType:         "A",
+  },
 };
 
 function getHumanValue(feat: ShapFeature): string {
@@ -109,6 +156,24 @@ function getHumanValue(feat: ShapFeature): string {
     }
     case "Hip.inch.":             return `${Math.round(value)} in`;
     case "Waist.inch.":           return `${Math.round(value)} in`;
+    // Clinical lab features
+    case "FSH.mIU.mL.":          return `${value.toFixed(1)} mIU/mL`;
+    case "LH.mIU.mL.":           return `${value.toFixed(1)} mIU/mL`;
+    case "FSH.LH":                return `1:${value.toFixed(1)}`;
+    case "AMH.ng.mL":
+    case "AMH.":                  return `${value.toFixed(1)} ng/mL`;
+    case "TSH..mIU.L.":           return `${value.toFixed(1)} mIU/L`;
+    case "PRL.ng.mL.":            return `${value.toFixed(1)} ng/mL`;
+    case "PRG.ng.mL.":            return `${value.toFixed(1)} ng/mL`;
+    case "Vit.D3..ng.mL.":        return `${value.toFixed(0)} ng/mL`;
+    case "Follicle.No...L.":
+    case "Follicle.No...R.":      return `${Math.round(value)} follicles`;
+    case "Avg.F.size..L..mm.":
+    case "Avg.F.size..R..mm.":
+    case "Endometrium..mm.":      return `${value.toFixed(1)} mm`;
+    case "CA_125_Level":          return `${value.toFixed(0)} U/mL`;
+    case "CRP_Level":             return `${value.toFixed(1)} mg/L`;
+    case "RBS..mg.dl.":           return `${value.toFixed(0)} mg/dL`;
     default:                      return feat.formatted;
   }
 }
@@ -128,6 +193,24 @@ const FEATURE_DESCRIPTIONS: Record<string, string> = {
   "Cycle_Length":           "The number of days in your typical cycle",
   "Blood.Group":            "Your ABO blood type",
   "Marraige.Status..Yrs.":  "How long you have been married",
+  // Clinical lab features
+  "FSH.mIU.mL.":           "Follicle-stimulating hormone — regulates the menstrual cycle",
+  "LH.mIU.mL.":            "Luteinising hormone — triggers ovulation",
+  "FSH.LH":                 "FSH to LH ratio — an elevated ratio is common in PCOS",
+  "AMH.ng.mL":              "Anti-Müllerian hormone — reflects ovarian reserve",
+  "TSH..mIU.L.":            "Thyroid-stimulating hormone — rules out thyroid conditions",
+  "PRL.ng.mL.":             "Prolactin — elevated levels can disrupt the menstrual cycle",
+  "Vit.D3..ng.mL.":         "Vitamin D — low levels are associated with hormonal imbalance",
+  "PRG.ng.mL.":             "Progesterone — confirms whether ovulation has occurred",
+  "Follicle.No...L.":       "Number of follicles detected on the left ovary (ultrasound)",
+  "Follicle.No...R.":       "Number of follicles detected on the right ovary (ultrasound)",
+  "Avg.F.size..L..mm.":     "Average follicle size on the left ovary (ultrasound)",
+  "Avg.F.size..R..mm.":     "Average follicle size on the right ovary (ultrasound)",
+  "Endometrium..mm.":       "Thickness of the uterine lining (ultrasound)",
+  "CA_125_Level":           "Cancer antigen 125 — elevated in endometriosis and other conditions",
+  "CRP_Level":              "C-reactive protein — a marker of systemic inflammation",
+  "RBS..mg.dl.":            "Random blood sugar — screens for insulin resistance",
+  "AMH.":                   "Anti-Müllerian hormone — reflects ovarian reserve",
 };
 
 function getFeatureLabel(feat: ShapFeature, condition: "PCOS" | "Endo"): string {
@@ -157,32 +240,47 @@ function getPatientPhrase(feat: ShapFeature, condition: "PCOS" | "Endo"): string
 
 const Results = ({ go }: { go: GoFn }) => {
   const [primerOpen, setPrimerOpen] = useState(false);
-  const [result, setResult] = useState<ScreenResult | null>(null);
+  const [tab,        setTab]        = useState<"pre" | "full">("pre");
+  const [result,     setResult]     = useState<ScreenResult | null>(null);
+  const [fullResult, setFullResult] = useState<FullScreenResult | null>(null);
 
   useEffect(() => {
     setResult(loadResult());
+    setFullResult(loadFullResult() ?? DEMO_FULL_RESULT);
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "fullScreenResult") {
+        setFullResult(loadFullResult() ?? DEMO_FULL_RESULT);
+        setTab("full");
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // Derive display values from real result, or fall back to demo values
-  const pcosProb  = result?.pcosProb  ?? 64;
-  const endoProb  = result?.endoProb  ?? 38;
-  const pcosClass = result?.pcosClass ?? "PCOS Positive";
-  const endoClass = result?.endoClass ?? "Endometriosis Negative";
-  const pcosShap  = result?.pcosShap ?? DEMO_PCOS_SHAP;
-  const endoShap  = result?.endoShap ?? DEMO_ENDO_SHAP;
+  const active = tab === "full" && fullResult ? fullResult : result;
+
+  // Derive display values from active result, or fall back to demo values
+  const pcosProb  = active?.pcosProb  ?? 64;
+  const endoProb  = active?.endoProb  ?? 38;
+  const pcosClass = active?.pcosClass ?? "PCOS Positive";
+  const endoClass = active?.endoClass ?? "Endometriosis Negative";
+  const pcosShap  = active?.pcosShap  ?? DEMO_PCOS_SHAP;
+  const endoShap  = active?.endoShap  ?? DEMO_ENDO_SHAP;
+  const rotterdam = tab === "full" && fullResult ? fullResult.rotterdam : null;
 
   return (
     <div className="page-enter" style={{ padding: "32px 0 80px" }}>
       <div className="container">
         {/* header */}
         <div style={{ display: "flex", alignItems: "end", justifyContent: "space-between",
-          marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
+          marginBottom: 20, flexWrap: "wrap", gap: 16 }}>
           <div>
-            <Eyebrow>Your report · {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</Eyebrow>
+            <Eyebrow>Anya Verma · {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</Eyebrow>
             <h1 className="serif" style={{ fontSize: "clamp(28px, 4vw, 48px)", lineHeight: 1.05, margin: "12px 0 0",
               fontWeight: 500, letterSpacing: "-.02em" }}>
-              Here's{" "}
-              <span className="serif-it" style={{ color: "var(--primary)" }}>what we found.</span>
+              Hi Anya —{" "}
+              <span className="serif-it" style={{ color: "var(--primary)" }}>here's what we found.</span>
             </h1>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
@@ -192,6 +290,104 @@ const Results = ({ go }: { go: GoFn }) => {
             </button>
           </div>
         </div>
+
+        {/* Tab switcher */}
+        <div style={{ display: "flex", gap: 4, marginBottom: 24,
+          background: "var(--bg-tint)", borderRadius: 14, padding: 4, width: "fit-content" }}>
+          {(["pre", "full"] as const).map(t => {
+            const label = t === "pre" ? "Pre-screening" : "Full screening";
+            const locked = t === "full" && !fullResult;
+            const active = tab === t;
+            return (
+              <button key={t} onClick={() => !locked && setTab(t)} style={{
+                height: 36, padding: "0 18px", borderRadius: 10, fontSize: 13, fontWeight: 600,
+                background: active ? "#fff" : "transparent",
+                color: active ? "var(--ink)" : locked ? "var(--muted)" : "var(--ink-2)",
+                border: "none", boxShadow: active ? "var(--shadow-sm)" : "none",
+                cursor: locked ? "default" : "pointer", display: "flex", alignItems: "center", gap: 6,
+              }}>
+                {label}
+                {locked && <span style={{ fontSize: 10, background: "var(--line)",
+                  padding: "1px 6px", borderRadius: 999 }}>awaiting clinician</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Full screening not yet available */}
+        {tab === "full" && !fullResult && (
+          <div style={{ padding: 32, borderRadius: 28, border: "1px dashed var(--line)",
+            textAlign: "center", marginBottom: 22 }}>
+            <div style={{ fontSize: 28, marginBottom: 12 }}>🩺</div>
+            <h3 className="serif" style={{ fontSize: 22, fontWeight: 500, margin: "0 0 8px" }}>
+              Full screening not yet available
+            </h3>
+            <p style={{ fontSize: 14, color: "var(--ink-2)", margin: "0 0 18px", maxWidth: 420, marginInline: "auto" }}>
+              Your clinician will enter your lab results and run the full assessment from the doctor dashboard. Check back after your appointment.
+            </p>
+            <button className="btn btn-ghost btn-sm" onClick={() => setTab("pre")}>
+              View pre-screening results
+            </button>
+          </div>
+        )}
+
+        {(tab === "pre" || fullResult) && (<>
+
+        {/* Rotterdam criteria — full screening only */}
+        {rotterdam && (
+          <div className="card" style={{ padding: 28, borderRadius: 28, marginBottom: 22 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+              marginBottom: 18 }}>
+              <div>
+                <Eyebrow>Clinical criteria</Eyebrow>
+                <h3 className="serif" style={{ fontSize: 22, margin: "8px 0 0", fontWeight: 500 }}>
+                  Rotterdam diagnostic criteria
+                </h3>
+              </div>
+              <span className="chip" style={{
+                background: rotterdam.met ? "var(--primary-soft)" : "var(--sage-soft)",
+                color:      rotterdam.met ? "var(--primary-deep)" : "#476158",
+                fontSize: 12,
+              }}>
+                {rotterdam.met
+                  ? `${rotterdam.metCount}/3 criteria met — suggests PCOS`
+                  : `${rotterdam.metCount}/3 criteria met — PCOS unlikely`}
+              </span>
+            </div>
+            <div style={{ display: "grid", gap: 10 }}>
+              {([
+                { key: "oligoAnovulation",  label: "Irregular or absent ovulation",        note: "Cycle reported as irregular (>35 days or <8 cycles/year)" },
+                { key: "hyperandrogenism",  label: "Clinical signs of high androgens",      note: "Excessive hair growth and/or acne reported" },
+                { key: "pcom",              label: "Polycystic ovaries on ultrasound",      note: "More than 20 follicles detected on either ovary" },
+              ] as { key: keyof RotterdamCriteria; label: string; note: string }[]).map(({ key, label, note }) => {
+                const met = !!rotterdam[key];
+                return (
+                  <div key={key} style={{ display: "flex", gap: 12, alignItems: "flex-start",
+                    padding: "12px 14px", borderRadius: 14,
+                    background: met ? "var(--primary-soft)" : "var(--bg-tint)" }}>
+                    <div style={{ width: 22, height: 22, borderRadius: 7, flex: "none", marginTop: 1,
+                      background: met ? "var(--primary)" : "var(--line)",
+                      color: met ? "#fff" : "var(--muted)",
+                      display: "grid", placeItems: "center" }}>
+                      {met && <Icon name="check" size={12}/>}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 14 }}>{label}</div>
+                      <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 2 }}>{note}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {rotterdam.pcosType && (
+              <div style={{ marginTop: 14, padding: "10px 14px", borderRadius: 12,
+                background: "var(--accent-soft)", fontSize: 13 }}>
+                <span style={{ fontWeight: 600, color: "var(--accent)" }}>PCOS phenotype: </span>
+                <span style={{ color: "var(--ink-2)" }}>Type {rotterdam.pcosType} — based on the combination of criteria present</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Top row — two risk cards */}
         <div className="rg-2" style={{ marginBottom: 22, gap: 16 }}>
@@ -213,8 +409,8 @@ const Results = ({ go }: { go: GoFn }) => {
             Key factors the model identified in your responses, and how much each one contributed.
           </p>
           <div className="rg-2" style={{ gap: 20 }}>
-            <ConditionFeatures conditionKey="PCOS" label="PCOS" shap={pcosShap}/>
-            <ConditionFeatures conditionKey="Endo" label="Endometriosis" shap={endoShap}/>
+            <ConditionFeatures conditionKey="PCOS" label="PCOS" shap={pcosShap} answerLabel={tab === "full" ? "Your result" : "Your answer"}/>
+            <ConditionFeatures conditionKey="Endo" label="Endometriosis" shap={endoShap} answerLabel={tab === "full" ? "Your result" : "Your answer"}/>
           </div>
         </div>
 
@@ -225,6 +421,8 @@ const Results = ({ go }: { go: GoFn }) => {
         </div>
 
         <Disclaimer/>
+
+        </>)}
       </div>
 
       {primerOpen && <PrimerModal onClose={() => setPrimerOpen(false)}/>}
@@ -386,8 +584,8 @@ const PatientShapSection = ({ conditionKey, conditionLabel, prob, shap }: {
 
 // ── Condition feature breakdown ────────────────────────────────────────────
 
-const ConditionFeatures = ({ conditionKey, label, shap }: {
-  conditionKey: "PCOS" | "Endo"; label: string; shap: ShapSection;
+const ConditionFeatures = ({ conditionKey, label, shap, answerLabel = "Your answer" }: {
+  conditionKey: "PCOS" | "Endo"; label: string; shap: ShapSection; answerLabel?: string;
 }) => {
   const toward = (Array.isArray(shap.toward) ? shap.toward : Object.values(shap.toward)) as ShapFeature[];
   const away   = (Array.isArray(shap.away)   ? shap.away   : Object.values(shap.away))   as ShapFeature[];
@@ -399,16 +597,16 @@ const ConditionFeatures = ({ conditionKey, label, shap }: {
       <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14,
         borderBottom: "1px solid var(--line)", paddingBottom: 10 }}>{label}</div>
       <div style={{ display: "grid", gap: 10 }}>
-        {toward.map((f, i) => <FeatureRow key={`t${i}`} feat={f} conditionKey={conditionKey} maxPhi={maxPhi} direction="toward"/>)}
-        {away.map((f, i)   => <FeatureRow key={`a${i}`} feat={f} conditionKey={conditionKey} maxPhi={maxPhi} direction="away"/>)}
+        {toward.map((f, i) => <FeatureRow key={`t${i}`} feat={f} conditionKey={conditionKey} maxPhi={maxPhi} direction="toward" answerLabel={answerLabel}/>)}
+        {away.map((f, i)   => <FeatureRow key={`a${i}`} feat={f} conditionKey={conditionKey} maxPhi={maxPhi} direction="away" answerLabel={answerLabel}/>)}
       </div>
     </div>
   );
 };
 
-const FeatureRow = ({ feat, conditionKey, maxPhi, direction }: {
+const FeatureRow = ({ feat, conditionKey, maxPhi, direction, answerLabel = "Your answer" }: {
   feat: ShapFeature; conditionKey: "PCOS" | "Endo";
-  maxPhi: number; direction: "toward" | "away";
+  maxPhi: number; direction: "toward" | "away"; answerLabel?: string;
 }) => {
   const isToward = direction === "toward";
   const tones = isToward
@@ -437,7 +635,7 @@ const FeatureRow = ({ feat, conditionKey, maxPhi, direction }: {
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 7 }}>
         <div style={{ fontSize: 11, color: "var(--ink-2)", minWidth: 72, fontWeight: 500,
-          textTransform: "uppercase", letterSpacing: ".01em" }}>Your answer</div>
+          textTransform: "uppercase", letterSpacing: ".01em" }}>{answerLabel}</div>
         <div style={{ flex: 1, height: 5, background: "rgba(42,31,37,.06)", borderRadius: 99 }}>
           <div style={{ width: `${barPct}%`, height: "100%",
             background: tones.fg, borderRadius: 99, opacity: 0.3 }}/>

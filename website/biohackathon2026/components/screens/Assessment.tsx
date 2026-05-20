@@ -417,6 +417,19 @@ export type ScreenResult = {
   endoShap?: ShapSection;
 };
 
+export type RotterdamCriteria = {
+  hyperandrogenism: boolean;
+  oligoAnovulation: boolean;
+  pcom: boolean;
+  met: boolean;
+  metCount: number;
+  pcosType: string | null;
+};
+
+export type FullScreenResult = ScreenResult & {
+  rotterdam: RotterdamCriteria;
+};
+
 const Assessment = ({ go }: { go: GoFn }) => {
   const [step, setStep] = React.useState(0);
   const [phase, setPhase] = React.useState<"welcome" | "q" | "done">("welcome");
@@ -467,6 +480,7 @@ const Assessment = ({ go }: { go: GoFn }) => {
       const data: ScreenResult = await res.json();
       setResult(data);
       localStorage.setItem("screenResult", JSON.stringify({ ...data, answers }));
+      localStorage.setItem("screenInputs", JSON.stringify(inputs));
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Unknown error";
       setFetchError(msg);
