@@ -66,22 +66,91 @@ const DEMO_ENDO_SHAP: ShapSection = {
   ],
 };
 
-function getPatientPhrase(feat: ShapFeature, condition: "PCOS" | "Endo"): string {
+function getHumanValue(feat: ShapFeature): string {
+  const { feature, value } = feat;
+  const painLevel = (v: number) => v === 0 ? "none" : v <= 3 ? "mild" : v <= 6 ? "moderate" : "severe";
+
+  switch (feature) {
+    case "Cycle.R.I.":            return value === 4 ? "Irregular" : "Regular";
+    case "Cycle.length.days.":
+    case "Cycle_Length":          return `${Math.round(value)} days`;
+    case "Weight.gain.Y.N.":      return value === 1 ? "Yes" : "No";
+    case "hair.growth.Y.N.":      return value === 1 ? "Yes" : "No";
+    case "Skin.darkening..Y.N.":  return value === 1 ? "Yes" : "No";
+    case "Hair.loss.Y.N.":        return value === 1 ? "Yes" : "No";
+    case "Pimples.Y.N.":          return value === 1 ? "Yes" : "No";
+    case "Fast.food..Y.N.":       return value === 1 ? "Yes" : "No";
+    case "Reg.Exercise.Y.N.":     return value === 1 ? "Yes" : "No";
+    case "Pregnant.Y.N.":         return value === 1 ? "Yes" : "No";
+    case "Family_History":        return value === 1 ? "Yes" : "No";
+    case "Infertility_Status":    return value === 1 ? "Yes" : "No";
+    case "Dysmenorrhea_Score":    return painLevel(value);
+    case "Pelvic_Pain_Score":     return painLevel(value);
+    case "Dyspareunia_Score":     return painLevel(value);
+    case "Dyschezia_Score":       return painLevel(value);
+    case "Urinary_Symptoms_Score":return painLevel(value);
+    case "Age_of_Menarche":       return `Age ${Math.round(value)}`;
+    case "Age..yrs.":
+    case "Age":                   return `${Math.round(value)} years old`;
+    case "Weight..Kg.":           return `${Math.round(value)} kg`;
+    case "Height.Cm.":            return `${Math.round(value)} cm`;
+    case "No..of.abortions":      return value === 0 ? "None" : String(Math.round(value));
+    case "BMI": {
+      if (value < 18.5) return "Underweight";
+      if (value < 25)   return "Healthy weight";
+      if (value < 30)   return "Overweight";
+      return "Obese range";
+    }
+    case "Waist.Hip.Ratio": {
+      if (value <= 0.72) return "Pear shape";
+      if (value <= 0.84) return "Hourglass shape";
+      if (value <= 0.92) return "Rectangle shape";
+      return "Apple shape";
+    }
+    case "Hip.inch.":             return `${Math.round(value)} in`;
+    case "Waist.inch.":           return `${Math.round(value)} in`;
+    default:                      return feat.formatted;
+  }
+}
+
+const FEATURE_DESCRIPTIONS: Record<string, string> = {
+  "Dysmenorrhea_Score":     "Pain experienced during your period",
+  "Pelvic_Pain_Score":      "Ongoing pain in the lower abdomen or pelvis",
+  "Dyspareunia_Score":      "Pain or discomfort during sex",
+  "Dyschezia_Score":        "Pain or difficulty during bowel movements",
+  "Urinary_Symptoms_Score": "Frequency, urgency, or pain when urinating",
+  "Age_of_Menarche":        "The age at which you had your first period",
+  "BMI":                    "Body mass index — a measure of weight relative to height",
+  "Waist.Hip.Ratio":        "Estimated from your body shape",
+  "Waist.inch.":            "Estimated from your body shape",
+  "Hip.inch.":              "Estimated from your body shape",
+  "Cycle.length.days.":     "The number of days in your typical cycle",
+  "Cycle_Length":           "The number of days in your typical cycle",
+  "Blood.Group":            "Your ABO blood type",
+  "Marraige.Status..Yrs.":  "How long you have been married",
+};
+
+function getFeatureLabel(feat: ShapFeature, condition: "PCOS" | "Endo"): string {
   if (condition === "PCOS") {
-    if (feat.feature === "Cycle.R.I.")
-      return feat.value === 4 ? "irregular periods" : "regular periods";
-    if (feat.feature in BINARY_PCOS)
-      return BINARY_PCOS[feat.feature][feat.value === 1 ? 0 : 1];
+    if (feat.feature === "Cycle.R.I.") return feat.value === 4 ? "Irregular periods" : "Regular periods";
+    if (feat.feature in BINARY_PCOS)   return BINARY_PCOS[feat.feature][feat.value === 1 ? 0 : 1];
   } else {
-    if (feat.feature in BINARY_ENDO)
-      return BINARY_ENDO[feat.feature][feat.value === 1 ? 0 : 1];
+    if (feat.feature in BINARY_ENDO)   return BINARY_ENDO[feat.feature][feat.value === 1 ? 0 : 1];
+  }
+  if (feat.feature === "BMI") {
+    const lvl = feat.z == null ? "notable" : feat.z > 1.5 ? "elevated" : feat.z < -1.5 ? "low" : "average";
+    return `${lvl} BMI`;
   }
   const level = feat.z == null ? "notable"
     : feat.z > 1.5  ? "elevated"
     : feat.z < -1.5 ? "low"
-    : "borderline";
+    : "average";
   const label = String(feat.label ?? feat.feature ?? "");
-  return `${level} ${label.toLowerCase()}`;
+  return `${level} ${label.toLowerCase().replace(/\bbmi\b/g, "BMI")}`;
+}
+
+function getPatientPhrase(feat: ShapFeature, condition: "PCOS" | "Endo"): string {
+  return getFeatureLabel(feat, condition);
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -101,36 +170,6 @@ const Results = ({ go }: { go: GoFn }) => {
   const endoClass = result?.endoClass ?? "Endometriosis Negative";
   const pcosShap  = result?.pcosShap ?? DEMO_PCOS_SHAP;
   const endoShap  = result?.endoShap ?? DEMO_ENDO_SHAP;
-
-  // Overall score = highest of the two probabilities
-  const overall = Math.max(pcosProb, endoProb);
-  const band    = riskBand(overall);
-
-  const indicators: {
-    name: string; score: number; othersScore: number;
-    level: "low" | "moderate" | "high"; icon: IconName; detail: string;
-  }[] = [
-    {
-      name: "PCOS likelihood",
-      score: Math.round(pcosProb),
-      othersScore: 35,
-      level: riskBand(pcosProb),
-      icon: "moon",
-      detail: pcosClass === "PCOS Positive"
-        ? `Your screening score of ${pcosProb}% places you in the ${riskBand(pcosProb)} range for PCOS. Cycle regularity, androgens, and body metrics were the key signals.`
-        : `Your screening score of ${pcosProb}% does not strongly suggest PCOS at this stage. Continuing to track your cycle is still worthwhile.`,
-    },
-    {
-      name: "Endometriosis likelihood",
-      score: Math.round(endoProb),
-      othersScore: 20,
-      level: riskBand(endoProb),
-      icon: "heart",
-      detail: endoClass === "Endometriosis Positive"
-        ? `Your pain scores and cycle data gave an endometriosis screening score of ${endoProb}%. This warrants discussion with a gynaecologist.`
-        : `Your endometriosis screening score was ${endoProb}%. No strong indicators at this stage, though monitoring pain patterns remains important.`,
-    },
-  ];
 
   return (
     <div className="page-enter" style={{ padding: "32px 0 80px" }}>
@@ -154,31 +193,28 @@ const Results = ({ go }: { go: GoFn }) => {
           </div>
         </div>
 
-        {/* Top row — risk + summary */}
-        <div className="rg-results-top" style={{ marginBottom: 22 }}>
-          <RiskCard score={overall} band={band} pcosClass={pcosClass} endoClass={endoClass}/>
-          <SummaryCard pcosProb={pcosProb} endoProb={endoProb} pcosClass={pcosClass} endoClass={endoClass} pcosShap={pcosShap} endoShap={endoShap} go={go}/>
+        {/* Top row — two risk cards */}
+        <div className="rg-2" style={{ marginBottom: 22, gap: 16 }}>
+          <RiskCard label="PCOS" prob={pcosProb}/>
+          <RiskCard label="Endometriosis" prob={endoProb}/>
+        </div>
+
+        {/* Summary */}
+        <div style={{ marginBottom: 22 }}>
+          <SummaryCard pcosProb={pcosProb} endoProb={endoProb} pcosShap={pcosShap} endoShap={endoShap} go={go}/>
         </div>
 
         {/* Indicators */}
         <div className="card" style={{ padding: 32, borderRadius: 28, marginBottom: 22 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end",
-            marginBottom: 22 }}>
-            <div>
-              <h3 className="serif" style={{ fontSize: 26, margin: 0, fontWeight: 500 }}>
-                Your indicators, broken down
-              </h3>
-              <p style={{ fontSize: 14, color: "var(--ink-2)", margin: "6px 0 0" }}>
-                Screening scores from our PCOS and Endometriosis models, compared to a reference population.
-              </p>
-            </div>
-            <button className="btn btn-ghost btn-sm">
-              <Icon name="info" size={14}/> Learn more
-            </button>
-          </div>
-
-          <div className="rg-2" style={{ gap: 12 }}>
-            {indicators.map((ind, i) => <IndicatorRow key={i} {...ind}/>)}
+          <h3 className="serif" style={{ fontSize: 26, margin: "0 0 6px", fontWeight: 500 }}>
+            Your indicators, broken down
+          </h3>
+          <p style={{ fontSize: 14, color: "var(--ink-2)", margin: "0 0 22px" }}>
+            Key factors the model identified in your responses, and how much each one contributed.
+          </p>
+          <div className="rg-2" style={{ gap: 20 }}>
+            <ConditionFeatures conditionKey="PCOS" label="PCOS" shap={pcosShap}/>
+            <ConditionFeatures conditionKey="Endo" label="Endometriosis" shap={endoShap}/>
           </div>
         </div>
 
@@ -196,58 +232,54 @@ const Results = ({ go }: { go: GoFn }) => {
   );
 };
 
-// ── Risk dial ──────────────────────────────────────────────────────────────
+// ── Risk card (single condition) ───────────────────────────────────────────
 
-const RiskCard = ({ score, band, pcosClass, endoClass }: {
-  score: number; band: "low" | "moderate" | "high"; pcosClass: string; endoClass: string;
+const RiskCard = ({ label, prob }: {
+  label: string; prob: number;
 }) => {
+  const band = riskBand(prob);
   const colors = {
     low:      { fg: "var(--sage)",    soft: "var(--sage-soft)",    label: "Low likelihood" },
     moderate: { fg: "var(--warn)",    soft: "var(--warn-soft)",    label: "Moderate likelihood" },
     high:     { fg: "var(--primary)", soft: "var(--primary-soft)", label: "Higher likelihood" },
   }[band];
 
-  const R = 92, C = 2 * Math.PI * R;
-  const dash = (score / 100) * C;
-
-  const bothPositive = pcosClass.includes("Positive") && endoClass.includes("Positive");
-  const eitherPositive = pcosClass.includes("Positive") || endoClass.includes("Positive");
+  const R = 72, C = 2 * Math.PI * R;
+  const dash = (prob / 100) * C;
+  const description = {
+    low:      `No strong patterns associated with ${label} were found in your responses.`,
+    moderate: `Some patterns linked to ${label} were present.`,
+    high:     `Several strong patterns associated with ${label} were detected.`,
+  }[band];
 
   return (
-    <div className="card risk-inner" style={{ padding: 32, borderRadius: 28, position: "relative" }}>
-      <div className="risk-dial">
-        <svg viewBox="0 0 220 220" width="100%" height="100%">
-          <circle cx="110" cy="110" r={R} fill="none"
-            stroke="rgba(42,31,37,.06)" strokeWidth="14"/>
-          <circle cx="110" cy="110" r={R} fill="none"
-            stroke={colors.fg} strokeWidth="14" strokeLinecap="round"
+    <div className="card" style={{ padding: 28, borderRadius: 28, display: "flex",
+      flexDirection: "column", alignItems: "center", gap: 18, textAlign: "center" }}>
+      <div style={{ position: "relative", width: 180, height: 180, flex: "none" }}>
+        <svg viewBox="0 0 180 180" width="180" height="180">
+          <circle cx="90" cy="90" r={R} fill="none"
+            stroke="rgba(42,31,37,.06)" strokeWidth="12"/>
+          <circle cx="90" cy="90" r={R} fill="none"
+            stroke={colors.fg} strokeWidth="12" strokeLinecap="round"
             strokeDasharray={`${dash} ${C}`}
-            transform="rotate(-90 110 110)"/>
+            transform="rotate(-90 90 90)"/>
         </svg>
-        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center",
-          textAlign: "center" }}>
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
           <div>
-            <div className="serif" style={{ fontSize: 60, lineHeight: 1, fontWeight: 500,
-              color: colors.fg, letterSpacing: "-.02em" }}>{Math.round(score)}</div>
-            <div style={{ fontSize: 12.5, color: "var(--ink-2)", marginTop: 2 }}>of 100</div>
+            <div className="serif" style={{ fontSize: 52, lineHeight: 1, fontWeight: 500,
+              color: colors.fg, letterSpacing: "-.02em" }}>{Math.round(prob)}</div>
+            <div style={{ fontSize: 12, color: "var(--ink-2)", marginTop: 2 }}>of 100</div>
           </div>
         </div>
       </div>
-      <div style={{ flex: 1 }}>
-        <div className="chip" style={{ background: colors.soft, color: colors.fg }}>
+
+      <div>
+        <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>{label}</div>
+        <div className="chip" style={{ background: colors.soft, color: colors.fg, marginBottom: 10 }}>
           <Icon name="dot" size={10}/> {colors.label}
         </div>
-        <h3 className="serif" style={{ fontSize: 26, lineHeight: 1.2, margin: "14px 0 8px",
-          fontWeight: 500, letterSpacing: "-.015em" }}>
-          {bothPositive
-            ? "Patterns associated with both conditions were found."
-            : eitherPositive
-              ? "Some patterns worth discussing with a clinician."
-              : "No strong patterns detected at this stage."}
-        </h3>
-        <p style={{ fontSize: 14, color: "var(--ink-2)", margin: 0, lineHeight: 1.55 }}>
-          This is a likelihood score — not a diagnosis. Both conditions can only be confirmed
-          by a clinician using bloodwork and, where appropriate, imaging.
+        <p style={{ fontSize: 13, color: "var(--ink-2)", margin: 0, lineHeight: 1.5 }}>
+          {description}
         </p>
       </div>
     </div>
@@ -256,8 +288,8 @@ const RiskCard = ({ score, band, pcosClass, endoClass }: {
 
 // ── Summary card ───────────────────────────────────────────────────────────
 
-const SummaryCard = ({ pcosProb, endoProb, pcosClass, endoClass, pcosShap, endoShap, go }: {
-  pcosProb: number; endoProb: number; pcosClass: string; endoClass: string;
+const SummaryCard = ({ pcosProb, endoProb, pcosShap, endoShap, go }: {
+  pcosProb: number; endoProb: number;
   pcosShap: ShapSection; endoShap: ShapSection; go: GoFn;
 }) => (
   <div className="card" style={{ padding: 32, borderRadius: 28,
@@ -271,9 +303,9 @@ const SummaryCard = ({ pcosProb, endoProb, pcosClass, endoClass, pcosShap, endoS
 
     <div style={{ display: "grid", gap: 12, margin: "16px 0 22px" }}>
       <PatientShapSection conditionKey="PCOS" conditionLabel="PCOS"
-        prob={pcosProb} condClass={pcosClass} shap={pcosShap}/>
+        prob={pcosProb} shap={pcosShap}/>
       <PatientShapSection conditionKey="Endo" conditionLabel="Endometriosis"
-        prob={endoProb} condClass={endoClass} shap={endoShap}/>
+        prob={endoProb} shap={endoShap}/>
     </div>
 
     <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -286,11 +318,18 @@ const SummaryCard = ({ pcosProb, endoProb, pcosClass, endoClass, pcosShap, endoS
 
 // ── Patient SHAP section ────────────────────────────────────────────────────
 
-const PatientShapSection = ({ conditionKey, conditionLabel, prob, condClass, shap }: {
+const PatientShapSection = ({ conditionKey, conditionLabel, prob, shap }: {
   conditionKey: "PCOS" | "Endo"; conditionLabel: string;
-  prob: number; condClass: string; shap?: ShapSection;
+  prob: number; shap?: ShapSection;
 }) => {
-  const isPositive = condClass.includes("Positive");
+  const band  = riskBand(prob);
+  const bandColor = { low: "var(--sage)", moderate: "var(--warn)", high: "var(--primary)" }[band];
+  const description = {
+    low:      `No strong patterns associated with ${conditionLabel} were found in your responses.`,
+    moderate: `Some patterns linked to ${conditionLabel} were present — worth keeping an eye on.`,
+    high:     `Several strong patterns associated with ${conditionLabel} were detected in your responses.`,
+  }[band];
+
   const toward = (Array.isArray(shap?.toward) ? shap!.toward : Object.values(shap?.toward ?? {})).slice(0, 3) as ShapFeature[];
   const away   = (Array.isArray(shap?.away)   ? shap!.away   : Object.values(shap?.away   ?? {})).slice(0, 3) as ShapFeature[];
 
@@ -300,15 +339,12 @@ const PatientShapSection = ({ conditionKey, conditionLabel, prob, condClass, sha
       <div style={{ display: "flex", alignItems: "center",
         justifyContent: "space-between", marginBottom: 8 }}>
         <div style={{ fontWeight: 600, fontSize: 14 }}>{conditionLabel}</div>
-        <span style={{ fontSize: 13, fontWeight: 700,
-          color: isPositive ? "var(--primary)" : "var(--sage)" }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: bandColor }}>
           {Math.round(prob)}%
         </span>
       </div>
       <p style={{ fontSize: 13, color: "var(--ink-2)", margin: "0 0 10px", lineHeight: 1.5 }}>
-        {isPositive
-          ? `Some patterns in your results are associated with ${conditionLabel}.`
-          : `No strong patterns associated with ${conditionLabel} were found.`}
+        {description}
       </p>
 
       {toward.length > 0 && (
@@ -348,56 +384,79 @@ const PatientShapSection = ({ conditionKey, conditionLabel, prob, condClass, sha
   );
 };
 
-// ── Indicator row ──────────────────────────────────────────────────────────
+// ── Condition feature breakdown ────────────────────────────────────────────
 
-const IndicatorRow = ({ name, score, othersScore, level, icon, detail }: {
-  name: string; score: number; othersScore: number;
-  level: "low" | "moderate" | "high"; icon: IconName; detail: string;
+const ConditionFeatures = ({ conditionKey, label, shap }: {
+  conditionKey: "PCOS" | "Endo"; label: string; shap: ShapSection;
 }) => {
-  const tones = {
-    low:      { fg: "var(--sage)",    soft: "var(--sage-soft)",    txt: "#476158" },
-    moderate: { fg: "var(--warn)",    soft: "var(--warn-soft)",    txt: "#8A4F1F" },
-    high:     { fg: "var(--primary)", soft: "var(--primary-soft)", txt: "var(--primary-deep)" },
-  }[level];
+  const toward = (Array.isArray(shap.toward) ? shap.toward : Object.values(shap.toward)) as ShapFeature[];
+  const away   = (Array.isArray(shap.away)   ? shap.away   : Object.values(shap.away))   as ShapFeature[];
+  const all    = [...toward, ...away];
+  const maxPhi = Math.max(...all.map(f => Math.abs(f.phi)), 0.01);
 
   return (
-    <div style={{ padding: 20, borderRadius: 20, border: "1px solid var(--line)",
+    <div>
+      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 14,
+        borderBottom: "1px solid var(--line)", paddingBottom: 10 }}>{label}</div>
+      <div style={{ display: "grid", gap: 10 }}>
+        {toward.map((f, i) => <FeatureRow key={`t${i}`} feat={f} conditionKey={conditionKey} maxPhi={maxPhi} direction="toward"/>)}
+        {away.map((f, i)   => <FeatureRow key={`a${i}`} feat={f} conditionKey={conditionKey} maxPhi={maxPhi} direction="away"/>)}
+      </div>
+    </div>
+  );
+};
+
+const FeatureRow = ({ feat, conditionKey, maxPhi, direction }: {
+  feat: ShapFeature; conditionKey: "PCOS" | "Endo";
+  maxPhi: number; direction: "toward" | "away";
+}) => {
+  const isToward = direction === "toward";
+  const tones = isToward
+    ? { fg: "var(--primary)", soft: "var(--primary-soft)", txt: "var(--primary-deep)", chipLabel: "Raised risk" }
+    : { fg: "var(--sage)",    soft: "var(--sage-soft)",    txt: "#476158",             chipLabel: "In your favour" };
+
+  const barPct     = Math.round((Math.abs(feat.phi) / maxPhi) * 100);
+  const phrase     = getPatientPhrase(feat, conditionKey);
+  const answer     = getHumanValue(feat);
+  const description = FEATURE_DESCRIPTIONS[feat.feature];
+
+  return (
+    <div style={{ padding: 18, borderRadius: 18, border: "1px solid var(--line)",
       background: "rgba(255,255,255,.6)" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 12, background: tones.soft,
-            color: tones.txt, display: "grid", placeItems: "center" }}>
-            <Icon name={icon} size={18}/>
-          </div>
-          <div style={{ fontWeight: 600, fontSize: 15 }}>{name}</div>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+        marginBottom: 12, gap: 10 }}>
+        <div>
+          <div style={{ fontWeight: 600, fontSize: 14, textTransform: "capitalize" }}>{phrase}</div>
+          {description && (
+            <div style={{ fontSize: 12, color: "var(--ink-2)", marginTop: 2 }}>{description}</div>
+          )}
         </div>
         <span className="chip" style={{ background: tones.soft, color: tones.txt,
-          textTransform: "capitalize" }}>{level}</span>
+          fontSize: 11, whiteSpace: "nowrap", flex: "none" }}>{tones.chipLabel}</span>
       </div>
 
-      <div style={{ marginTop: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ fontSize: 11, color: tones.fg, opacity: 0.4, minWidth: 68, fontWeight: 500,
-            letterSpacing: ".01em", textTransform: "uppercase" }}>Others</div>
-          <div style={{ flex: 1, height: 5, background: "rgba(42,31,37,.06)", borderRadius: 99 }}>
-            <div style={{ width: `${othersScore}%`, height: "100%",
-              background: tones.fg, borderRadius: 99, opacity: 0.3 }}/>
-          </div>
-          <div style={{ fontSize: 13, color: tones.fg, opacity: 0.4, fontWeight: 600,
-            minWidth: 28, textAlign: "right" }}>{othersScore}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 7 }}>
+        <div style={{ fontSize: 11, color: "var(--ink-2)", minWidth: 72, fontWeight: 500,
+          textTransform: "uppercase", letterSpacing: ".01em" }}>Your answer</div>
+        <div style={{ flex: 1, height: 5, background: "rgba(42,31,37,.06)", borderRadius: 99 }}>
+          <div style={{ width: `${barPct}%`, height: "100%",
+            background: tones.fg, borderRadius: 99, opacity: 0.3 }}/>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 7 }}>
-          <div style={{ fontSize: 11, color: tones.txt, minWidth: 68, fontWeight: 600,
-            letterSpacing: ".01em", textTransform: "uppercase" }}>You</div>
-          <div style={{ flex: 1, height: 7, background: "rgba(42,31,37,.06)", borderRadius: 99 }}>
-            <div style={{ width: `${score}%`, height: "100%", background: tones.fg, borderRadius: 99 }}/>
-          </div>
-          <div className="serif" style={{ fontSize: 16, color: tones.fg, fontWeight: 700,
-            minWidth: 28, textAlign: "right" }}>{score}</div>
+        <div style={{ fontSize: 13, color: "var(--ink-2)", minWidth: 72,
+          textAlign: "right", fontWeight: 500 }}>{answer}</div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ fontSize: 11, color: tones.txt, minWidth: 72, fontWeight: 600,
+          textTransform: "uppercase", letterSpacing: ".01em" }}>Impact</div>
+        <div style={{ flex: 1, height: 7, background: "rgba(42,31,37,.06)", borderRadius: 99 }}>
+          <div style={{ width: `${barPct}%`, height: "100%",
+            background: tones.fg, borderRadius: 99, transition: "width .5s ease" }}/>
+        </div>
+        <div className="serif" style={{ fontSize: 15, color: tones.fg, fontWeight: 700,
+          minWidth: 72, textAlign: "right" }}>
+          {barPct >= 75 ? "strong" : barPct >= 40 ? "moderate" : "mild"}
         </div>
       </div>
-
-      <p style={{ fontSize: 13, color: "var(--ink-2)", margin: "12px 0 0", lineHeight: 1.5 }}>{detail}</p>
     </div>
   );
 };
