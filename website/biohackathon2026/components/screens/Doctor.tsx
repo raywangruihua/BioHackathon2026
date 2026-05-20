@@ -7,6 +7,7 @@ import Avatar, { type AvatarTone } from '@/components/Avatar';
 import Eyebrow from '@/components/Eyebrow';
 import Stat from '@/components/Stat';
 import type { GoFn } from '@/lib/screens';
+import type { ScreenResult, ShapSection } from '@/components/screens/Assessment';
 
 
 // src/doctor.jsx — clinician view: patient queue + patient detail
@@ -28,6 +29,14 @@ const PATIENTS: { id: number; name: string; age: number; risk: number; band: str
 
 const Doctor = ({ go }: { go: GoFn }) => {
   const [selected, setSelected] = React.useState(PATIENTS[0]);
+  const [screenResult, setScreenResult] = React.useState<ScreenResult | null>(null);
+
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem("screenResult");
+      if (raw) setScreenResult(JSON.parse(raw) as ScreenResult);
+    } catch {}
+  }, []);
 
   return (
     <div className="page-enter" style={{ padding: "32px 0 80px" }}>
@@ -62,7 +71,7 @@ const Doctor = ({ go }: { go: GoFn }) => {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1.1fr", gap: 22 }}>
           <Queue selected={selected} setSelected={setSelected}/>
-          <PatientDetail patient={selected} go={go}/>
+          <PatientDetail patient={selected} screenResult={screenResult} go={go}/>
         </div>
       </div>
     </div>
@@ -170,8 +179,71 @@ const Queue = ({ selected, setSelected }) => {
   );
 };
 
+// ───────── Clinical SHAP section ─────────
+const ClinicalShapSection = ({ condition, prob, shap }: {
+  condition: string; prob: number; shap?: ShapSection;
+}) => {
+  if (!shap || (shap.toward.length === 0 && shap.away.length === 0)) return null;
+  const isPositive = prob > 50;
+  const riskLvl = prob > 70 ? "HIGH" : prob > 45 ? "MODERATE" : "LOW";
+  const toneColor = prob > 70 ? "var(--primary)" : prob > 45 ? "var(--warn)" : "var(--sage)";
+
+  return (
+    <div style={{ padding: 16, borderRadius: 16, background: "rgba(255,255,255,.5)",
+      border: "1px solid var(--line)", marginBottom: 10 }}>
+      <div style={{ display: "flex", alignItems: "center",
+        justifyContent: "space-between", marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase",
+            letterSpacing: ".08em", fontWeight: 600 }}>{condition} screening</div>
+          <div style={{ fontSize: 14, fontWeight: 600, marginTop: 2 }}>
+            {isPositive ? `${condition} Positive` : `${condition} Negative`}
+          </div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div className="serif" style={{ fontSize: 28, fontWeight: 500,
+            color: toneColor, lineHeight: 1 }}>{Math.round(prob)}%</div>
+          <div style={{ fontSize: 11, color: toneColor, fontWeight: 600 }}>{riskLvl}</div>
+        </div>
+      </div>
+
+      {shap.toward.length > 0 && (
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase",
+            letterSpacing: ".06em", fontWeight: 600, marginBottom: 6 }}>Top findings supporting</div>
+          <div style={{ display: "grid", gap: 3 }}>
+            {shap.toward.map((f, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between",
+                padding: "5px 10px", borderRadius: 8, background: "var(--bg)", fontSize: 12.5 }}>
+                <span style={{ color: "var(--ink-2)" }}>{f.label}</span>
+                <span style={{ fontWeight: 600 }}>{f.formatted}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {shap.away.length > 0 && (
+        <div>
+          <div style={{ fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase",
+            letterSpacing: ".06em", fontWeight: 600, marginBottom: 6 }}>Top findings against</div>
+          <div style={{ display: "grid", gap: 3 }}>
+            {shap.away.map((f, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between",
+                padding: "5px 10px", borderRadius: 8, background: "var(--bg)", fontSize: 12.5 }}>
+                <span style={{ color: "var(--ink-2)" }}>{f.label}</span>
+                <span style={{ fontWeight: 600 }}>{f.formatted}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ───────── Patient detail ─────────
-const PatientDetail = ({ patient, go }) => {
+const PatientDetail = ({ patient, screenResult, go }) => {
   const tone = ({
     high:     { fg: "var(--primary)", soft: "var(--primary-soft)", label: "High likelihood" },
     moderate: { fg: "var(--warn)",    soft: "var(--warn-soft)",    label: "Moderate" },
@@ -247,6 +319,17 @@ const PatientDetail = ({ patient, go }) => {
             note="Not yet ordered · recommend pelvic US"/>
         </div>
       </div>
+
+      {screenResult && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase",
+            letterSpacing: ".08em", fontWeight: 600, marginBottom: 10 }}>
+            Pearl AI Screening Findings
+          </div>
+          <ClinicalShapSection condition="PCOS" prob={screenResult.pcosProb} shap={screenResult.pcosShap}/>
+          <ClinicalShapSection condition="Endometriosis" prob={screenResult.endoProb} shap={screenResult.endoShap}/>
+        </div>
+      )}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
         <LabsCard/>
