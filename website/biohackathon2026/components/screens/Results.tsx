@@ -281,9 +281,14 @@ function getFeatureLabel(feat: ShapFeature, condition: "PCOS" | "Endo"): string 
     return "BMI";
   }
   if (feat.feature === "Age..yrs." || feat.feature === "Age") {
-    if (feat.z != null && feat.z > 1.5)  return "older age";
-    if (feat.z != null && feat.z < -1.5) return "younger age";
-    return "age";
+    if (feat.z != null && feat.z > 1.5)  return "older patient age";
+    if (feat.z != null && feat.z < -1.5) return "younger patient age";
+    return "patient age";
+  }
+  if (feat.feature === "Age_of_Menarche") {
+    if (feat.z != null && feat.z > 1.5)  return "later first period";
+    if (feat.z != null && feat.z < -1.5) return "earlier first period";
+    return "age at first period";
   }
   const level = feat.z != null && feat.z > 1.5  ? "elevated"
               : feat.z != null && feat.z < -1.5 ? "low"
@@ -323,8 +328,6 @@ const Results = ({ go }: { go: GoFn }) => {
   // Derive display values from active result, or fall back to demo values
   const pcosProb  = active?.pcosProb  ?? 64;
   const endoProb  = active?.endoProb  ?? 38;
-  const pcosClass = active?.pcosClass ?? "PCOS Positive";
-  const endoClass = active?.endoClass ?? "Endometriosis Negative";
   const pcosShap  = active?.pcosShap  ?? DEMO_PCOS_SHAP;
   const endoShap  = active?.endoShap  ?? DEMO_ENDO_SHAP;
   const rotterdam = tab === "full" && fullResult ? fullResult.rotterdam : null;
