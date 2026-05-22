@@ -161,9 +161,12 @@ build_shap_list <- function(phi, x_vals, pca_obj = NULL, plain_dict, top_n = 5L)
     )
   }
 
+  # jsonlite serializes empty list() as {} — use class "json" to force [] for empty arrays
+  force_array <- function(x) if (length(x) == 0) structure("[]", class = "json") else x
+
   list(
-    toward = lapply(toward, make_entry),
-    away   = lapply(away,   make_entry)
+    toward = force_array(lapply(toward, make_entry)),
+    away   = force_array(lapply(away,   make_entry))
   )
 }
 

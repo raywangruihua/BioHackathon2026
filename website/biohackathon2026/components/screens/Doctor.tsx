@@ -7,7 +7,7 @@ import Avatar, { type AvatarTone } from '@/components/Avatar';
 import Eyebrow from '@/components/Eyebrow';
 import Stat from '@/components/Stat';
 import type { GoFn } from '@/lib/screens';
-import type { ScreenResult, FullScreenResult, ShapSection } from '@/components/screens/Assessment';
+import type { ScreenResult, FullScreenResult, ShapSection, ShapFeature } from '@/components/screens/Assessment';
 
 
 // src/doctor.jsx — clinician view: patient queue + patient detail
@@ -191,7 +191,9 @@ const Queue = ({ selected, setSelected }) => {
 const ClinicalShapSection = ({ condition, prob, shap }: {
   condition: string; prob: number; shap?: ShapSection;
 }) => {
-  if (!shap || (shap.toward.length === 0 && shap.away.length === 0)) return null;
+  const towardArr = (Array.isArray(shap?.toward) ? shap!.toward : Object.values(shap?.toward ?? {})) as ShapFeature[];
+  const awayArr   = (Array.isArray(shap?.away)   ? shap!.away   : Object.values(shap?.away   ?? {})) as ShapFeature[];
+  if (!shap || (towardArr.length === 0 && awayArr.length === 0)) return null;
   const isPositive = prob > 50;
   const riskLvl = prob > 70 ? "HIGH" : prob > 45 ? "MODERATE" : "LOW";
   const toneColor = prob > 70 ? "var(--primary)" : prob > 45 ? "var(--warn)" : "var(--sage)";
@@ -215,12 +217,12 @@ const ClinicalShapSection = ({ condition, prob, shap }: {
         </div>
       </div>
 
-      {shap.toward.length > 0 && (
+      {towardArr.length > 0 && (
         <div style={{ marginBottom: 10 }}>
           <div style={{ fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase",
             letterSpacing: ".06em", fontWeight: 600, marginBottom: 6 }}>Top findings supporting</div>
           <div style={{ display: "grid", gap: 3 }}>
-            {shap.toward.map((f, i) => (
+            {towardArr.map((f, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between",
                 padding: "5px 10px", borderRadius: 8, background: "var(--bg)", fontSize: 12.5 }}>
                 <span style={{ color: "var(--ink-2)" }}>{f.label}</span>
@@ -231,12 +233,12 @@ const ClinicalShapSection = ({ condition, prob, shap }: {
         </div>
       )}
 
-      {shap.away.length > 0 && (
+      {awayArr.length > 0 && (
         <div>
           <div style={{ fontSize: 11, color: "var(--ink-2)", textTransform: "uppercase",
             letterSpacing: ".06em", fontWeight: 600, marginBottom: 6 }}>Top findings against</div>
           <div style={{ display: "grid", gap: 3 }}>
-            {shap.away.map((f, i) => (
+            {awayArr.map((f, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between",
                 padding: "5px 10px", borderRadius: 8, background: "var(--bg)", fontSize: 12.5 }}>
                 <span style={{ color: "var(--ink-2)" }}>{f.label}</span>

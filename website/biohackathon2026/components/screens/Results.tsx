@@ -15,11 +15,54 @@ function riskBand(prob: number): "low" | "moderate" | "high" {
   return "low";
 }
 
+// jsonlite serializes empty R lists as {} instead of [] — normalize on load
+function normalizeShap(raw: unknown): ShapSection | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const s = raw as Record<string, unknown>;
+  return {
+    toward: Array.isArray(s.toward) ? (s.toward as ShapFeature[]) : Object.values(s.toward ?? {}) as ShapFeature[],
+    away:   Array.isArray(s.away)   ? (s.away   as ShapFeature[]) : Object.values(s.away   ?? {}) as ShapFeature[],
+  };
+}
+
+function normalizeRotterdam(raw: unknown): RotterdamCriteria | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const r = raw as Record<string, unknown>;
+  return {
+    hyperandrogenism: !!r.hyperandrogenism,
+    oligoAnovulation: !!r.oligoAnovulation,
+    pcom:             !!r.pcom,
+    met:              !!r.met,
+    metCount:         typeof r.metCount === "number" ? r.metCount : 0,
+    pcosType:         typeof r.pcosType === "string" ? r.pcosType : null,
+  };
+}
+
+// R/jsonlite may wrap scalars in a 1-element array when auto_unbox is off
+function coerceNum(v: unknown): number {
+  if (Array.isArray(v)) return isFinite(Number(v[0])) ? Number(v[0]) : 0;
+  return isFinite(Number(v)) ? Number(v) : 0;
+}
+function coerceStr(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (Array.isArray(v) && v.length === 1) return String(v[0]);
+  return "";
+}
+
 function loadResult(): ScreenResult | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem("screenResult");
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const obj = JSON.parse(raw) as Record<string, unknown>;
+    return {
+      pcosProb:  coerceNum(obj.pcosProb),
+      pcosClass: coerceStr(obj.pcosClass),
+      endoProb:  coerceNum(obj.endoProb),
+      endoClass: coerceStr(obj.endoClass),
+      pcosShap:  normalizeShap(obj.pcosShap),
+      endoShap:  normalizeShap(obj.endoShap),
+    };
   } catch { return null; }
 }
 
@@ -27,7 +70,19 @@ function loadFullResult(): FullScreenResult | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem("fullScreenResult");
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const obj = JSON.parse(raw) as Record<string, unknown>;
+    const rotterdam = normalizeRotterdam(obj.rotterdam);
+    if (!rotterdam) return null;
+    return {
+      pcosProb:  coerceNum(obj.pcosProb),
+      pcosClass: coerceStr(obj.pcosClass),
+      endoProb:  coerceNum(obj.endoProb),
+      endoClass: coerceStr(obj.endoClass),
+      pcosShap:  normalizeShap(obj.pcosShap),
+      endoShap:  normalizeShap(obj.endoShap),
+      rotterdam,
+    };
   } catch { return null; }
 }
 
@@ -221,15 +276,20 @@ function getFeatureLabel(feat: ShapFeature, condition: "PCOS" | "Endo"): string 
     if (feat.feature in BINARY_ENDO)   return BINARY_ENDO[feat.feature][feat.value === 1 ? 0 : 1];
   }
   if (feat.feature === "BMI") {
-    const lvl = feat.z == null ? "notable" : feat.z > 1.5 ? "elevated" : feat.z < -1.5 ? "low" : "average";
-    return `${lvl} BMI`;
+    if (feat.z != null && feat.z > 1.5)  return "elevated BMI";
+    if (feat.z != null && feat.z < -1.5) return "low BMI";
+    return "BMI";
   }
-  const level = feat.z == null ? "notable"
-    : feat.z > 1.5  ? "elevated"
-    : feat.z < -1.5 ? "low"
-    : "average";
-  const label = String(feat.label ?? feat.feature ?? "");
-  return `${level} ${label.toLowerCase().replace(/\bbmi\b/g, "BMI")}`;
+  if (feat.feature === "Age..yrs." || feat.feature === "Age") {
+    if (feat.z != null && feat.z > 1.5)  return "older age";
+    if (feat.z != null && feat.z < -1.5) return "younger age";
+    return "age";
+  }
+  const level = feat.z != null && feat.z > 1.5  ? "elevated"
+              : feat.z != null && feat.z < -1.5 ? "low"
+              : "";
+  const label = String(feat.label ?? feat.feature ?? "").toLowerCase().replace(/\bbmi\b/g, "BMI");
+  return level ? `${level} ${label}` : label;
 }
 
 function getPatientPhrase(feat: ShapFeature, condition: "PCOS" | "Endo"): string {
@@ -587,8 +647,8 @@ const PatientShapSection = ({ conditionKey, conditionLabel, prob, shap }: {
 const ConditionFeatures = ({ conditionKey, label, shap, answerLabel = "Your answer" }: {
   conditionKey: "PCOS" | "Endo"; label: string; shap: ShapSection; answerLabel?: string;
 }) => {
-  const toward = (Array.isArray(shap.toward) ? shap.toward : Object.values(shap.toward)) as ShapFeature[];
-  const away   = (Array.isArray(shap.away)   ? shap.away   : Object.values(shap.away))   as ShapFeature[];
+  const toward = (Array.isArray(shap?.toward) ? shap!.toward : Object.values(shap?.toward ?? {})) as ShapFeature[];
+  const away   = (Array.isArray(shap?.away)   ? shap!.away   : Object.values(shap?.away   ?? {})) as ShapFeature[];
   const all    = [...toward, ...away];
   const maxPhi = Math.max(...all.map(f => Math.abs(f.phi)), 0.01);
 
